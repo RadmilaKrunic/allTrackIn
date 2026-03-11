@@ -1,0 +1,120 @@
+import axios from 'axios';
+import type {
+  SpendingEntry, TrainingEntry, BookEntry, EventEntry,
+  WorkEntry, EatingEntry, Category, Quote, Preferences,
+  DashboardData, CalendarData,
+} from '../types';
+
+const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
+
+const http = axios.create({
+  baseURL: BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+http.interceptors.response.use(
+  (r) => r.data,
+  (err) => Promise.reject(new Error(
+    err.response?.data?.error?.message ?? err.message ?? 'An error occurred'
+  ))
+);
+
+// ─── Generic CRUD factory ───────────────────────────────────────────────────
+const crud = <T>(resource: string) => ({
+  getAll: (params?: Record<string, unknown>) =>
+    http.get<T[], T[]>(`/${resource}`, { params }),
+  getOne: (id: string) =>
+    http.get<T, T>(`/${resource}/${id}`),
+  create: (data: Partial<T>) =>
+    http.post<T, T>(`/${resource}`, data),
+  update: (id: string, data: Partial<T>) =>
+    http.put<T, T>(`/${resource}/${id}`, data),
+  remove: (id: string) =>
+    http.delete<{ success: boolean }, { success: boolean }>(`/${resource}/${id}`),
+});
+
+// ─── Module APIs ────────────────────────────────────────────────────────────
+export const spendingApi = {
+  getTransactions: (params?: Record<string, unknown>) =>
+    http.get<SpendingEntry[], SpendingEntry[]>('/spending/transactions', { params }),
+  createTransaction: (data: Partial<SpendingEntry>) =>
+    http.post<SpendingEntry, SpendingEntry>('/spending/transactions', data),
+  updateTransaction: (id: string, data: Partial<SpendingEntry>) =>
+    http.put<SpendingEntry, SpendingEntry>(`/spending/transactions/${id}`, data),
+  deleteTransaction: (id: string) =>
+    http.delete(`/spending/transactions/${id}`),
+
+  getFixed: () => http.get<SpendingEntry[], SpendingEntry[]>('/spending/fixed'),
+  createFixed: (data: Partial<SpendingEntry>) =>
+    http.post<SpendingEntry, SpendingEntry>('/spending/fixed', data),
+  updateFixed: (id: string, data: Partial<SpendingEntry>) =>
+    http.put<SpendingEntry, SpendingEntry>(`/spending/fixed/${id}`, data),
+  deleteFixed: (id: string) => http.delete(`/spending/fixed/${id}`),
+
+  getProducts: () => http.get<SpendingEntry[], SpendingEntry[]>('/spending/products'),
+  createProduct: (data: Partial<SpendingEntry>) =>
+    http.post<SpendingEntry, SpendingEntry>('/spending/products', data),
+  updateProduct: (id: string, data: Partial<SpendingEntry>) =>
+    http.put<SpendingEntry, SpendingEntry>(`/spending/products/${id}`, data),
+  deleteProduct: (id: string) => http.delete(`/spending/products/${id}`),
+
+  createShoppingList: (productIds: string[]) =>
+    http.post<{ items: SpendingEntry[]; estimatedTotal: number }, { items: SpendingEntry[]; estimatedTotal: number }>(
+      '/spending/shopping-list', { productIds }
+    ),
+  getSummary: (params?: Record<string, unknown>) =>
+    http.get('/spending/summary', { params }),
+};
+
+export const trainingApi = crud<TrainingEntry>('training');
+export const booksApi = {
+  ...crud<BookEntry>('books'),
+  getWishlist: () => http.get<BookEntry[], BookEntry[]>('/books/wishlist'),
+  getBorrowed: () => http.get<BookEntry[], BookEntry[]>('/books/borrowed'),
+};
+export const eventsApi = {
+  ...crud<EventEntry>('events'),
+  getUpcoming: () => http.get<EventEntry[], EventEntry[]>('/events/upcoming'),
+};
+export const workApi = {
+  ...crud<WorkEntry>('work'),
+  getStats: (params?: Record<string, unknown>) =>
+    http.get('/work/stats', { params }),
+};
+export const eatingApi = {
+  ...crud<EatingEntry>('eating'),
+  getRecipes: () => http.get<EatingEntry[], EatingEntry[]>('/eating/recipes'),
+};
+
+export const settingsApi = {
+  getCategories: (module?: string) =>
+    http.get<Category[], Category[]>('/settings/categories', { params: { module } }),
+  createCategory: (data: Partial<Category>) =>
+    http.post<Category, Category>('/settings/categories', data),
+  updateCategory: (id: string, data: Partial<Category>) =>
+    http.put<Category, Category>(`/settings/categories/${id}`, data),
+  deleteCategory: (id: string) =>
+    http.delete(`/settings/categories/${id}`),
+
+  getPreferences: () =>
+    http.get<Preferences, Preferences>('/settings/preferences'),
+  updatePreferences: (data: Partial<Preferences>) =>
+    http.put<Preferences, Preferences>('/settings/preferences', data),
+
+  getQuotes: () =>
+    http.get<Quote[], Quote[]>('/settings/quotes'),
+  getRandomQuote: () =>
+    http.get<Quote | null, Quote | null>('/settings/quotes/random'),
+  createQuote: (data: Partial<Quote>) =>
+    http.post<Quote, Quote>('/settings/quotes', data),
+  updateQuote: (id: string, data: Partial<Quote>) =>
+    http.put<Quote, Quote>(`/settings/quotes/${id}`, data),
+  deleteQuote: (id: string) =>
+    http.delete(`/settings/quotes/${id}`),
+};
+
+export const dashboardApi = {
+  get: () => http.get<DashboardData, DashboardData>('/dashboard'),
+  getCalendar: (year: number, month: number) =>
+    http.get<CalendarData, CalendarData>('/calendar', { params: { year, month } }),
+};
