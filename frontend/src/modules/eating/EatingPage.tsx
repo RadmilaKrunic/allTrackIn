@@ -97,7 +97,9 @@ export default function EatingPage() {
     setLogForm({
       date: e.date ?? format(new Date(), 'yyyy-MM-dd'),
       categories: e.categories ?? [],
-      meals: e.meals && e.meals.length > 0 ? e.meals : [{ name: '', time: '', notes: '' }],
+      meals: e.meals && e.meals.length > 0
+        ? e.meals.map(m => ({ name: m.name, time: m.time ?? '', notes: m.notes ?? '' }))
+        : [{ name: '', time: '', notes: '' }],
       notes: e.notes ?? '',
       status: e.status ?? 'done',
     });

@@ -12,9 +12,11 @@ interface FindOptions {
  * Module services extend this via composition or inheritance (OCP).
  */
 export class BaseService<T extends BaseDocument> {
-  protected db: Datastore;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected db: Datastore<any>;
 
-  constructor(datastore: Datastore) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(datastore: Datastore<any>) {
     this.db = datastore;
   }
 

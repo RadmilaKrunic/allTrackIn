@@ -30,7 +30,7 @@ const EVENT_TYPE_COLORS: Record<EventType, { bg: string; border: string; text: s
 
 const EVENT_TYPES: EventType[] = ['birthday', 'vacation', 'appointment', 'reminder', 'holiday', 'other'];
 
-const EMPTY_FORM: Omit<EventEntry, '_id' | 'createdAt' | 'updatedAt'> = {
+const EMPTY_FORM: EventFormState = {
   name: '',
   date: '',
   time: '',
