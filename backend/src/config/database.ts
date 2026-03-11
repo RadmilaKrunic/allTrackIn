@@ -3,7 +3,8 @@ import path from 'path';
 
 const DATA_DIR = path.join(__dirname, '../../data');
 
-const createStore = (filename: string): Datastore =>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const createStore = (filename: string): Datastore<any> =>
   Datastore.create({
     filename: path.join(DATA_DIR, `${filename}.db`),
     autoload: true,
