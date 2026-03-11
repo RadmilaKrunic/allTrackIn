@@ -1,0 +1,91 @@
+import { Router, Request, Response, NextFunction } from 'express';
+import { BaseService } from '../../shared/base.service';
+import { db } from '../../config/database';
+import { Category, Preferences, Quote } from '../../types/models';
+
+const settingsService = new BaseService<Category | Preferences>(db.settings);
+const quotesService = new BaseService<Quote>(db.quotes);
+const router = Router();
+
+// ─── Categories ─────────────────────────────────────────────────────────────
+router.get('/categories', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { module } = req.query as Record<string, string>;
+    const query: Record<string, unknown> = { type: 'category' };
+    if (module) query.module = module;
+    res.json(await settingsService.findAll(query, { sort: { module: 1, name: 1 } }));
+  } catch (err) { next(err); }
+});
+
+router.post('/categories', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.status(201).json(await settingsService.create({ ...req.body, type: 'category' }));
+  } catch (err) { next(err); }
+});
+
+router.put('/categories/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json(await settingsService.update(req.params.id, req.body));
+  } catch (err) { next(err); }
+});
+
+router.delete('/categories/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await settingsService.delete(req.params.id);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+// ─── Preferences ────────────────────────────────────────────────────────────
+router.get('/preferences', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const prefs = await settingsService.findOne({ type: 'preferences' });
+    res.json(prefs ?? { type: 'preferences', theme: 'pastel' });
+  } catch (err) { next(err); }
+});
+
+router.put('/preferences', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await settingsService.findOne({ type: 'preferences' });
+    const prefs = existing
+      ? await settingsService.update(existing._id!, req.body)
+      : await settingsService.create({ ...req.body, type: 'preferences' });
+    res.json(prefs);
+  } catch (err) { next(err); }
+});
+
+// ─── Quotes / Affirmations ──────────────────────────────────────────────────
+router.get('/quotes', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json(await quotesService.findAll({}, { sort: { createdAt: -1 } }));
+  } catch (err) { next(err); }
+});
+
+router.get('/quotes/random', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const all = await quotesService.findAll({ active: { $ne: false } });
+    if (!all.length) return res.json(null);
+    res.json(all[Math.floor(Math.random() * all.length)]);
+  } catch (err) { next(err); }
+});
+
+router.post('/quotes', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.status(201).json(await quotesService.create({ ...req.body, active: true }));
+  } catch (err) { next(err); }
+});
+
+router.put('/quotes/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json(await quotesService.update(req.params.id, req.body));
+  } catch (err) { next(err); }
+});
+
+router.delete('/quotes/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await quotesService.delete(req.params.id);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+export default router;
