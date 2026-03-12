@@ -7,7 +7,7 @@ import {
 import { spendingApi } from '../../api/client';
 import { useApp } from '../../contexts/AppContext';
 import { MODULE_COLORS } from '../../themes/themes';
-import type { SpendingEntry, TransactionType, PlanDoneStatus } from '../../types';
+import type { SpendingEntry, TransactionType, PlanDoneStatus, CartItem } from '../../types';
 import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import PlanDoneToggle from '../../components/ui/PlanDoneToggle';
@@ -875,8 +875,9 @@ function ShoppingTab() {
     if (selected.size === 0) return;
     setGenerating(true);
     try {
-      await spendingApi.createShoppingList(Array.from(selected));
-      notify(`Shopping list created with ${selected.size} item(s)`, 'success');
+      await spendingApi.createCart(Array.from(selected));
+      qc.invalidateQueries({ queryKey: ['spending', 'cart'] });
+      notify(`Added ${selected.size} item(s) to Shopping Cart 🛒`, 'success');
       setSelected(new Set());
     } catch (err) {
       notify((err as Error).message, 'error');
@@ -1052,6 +1053,148 @@ function ShoppingTab() {
   );
 }
 
+// ─── Cart Tab ─────────────────────────────────────────────────────────────────
+
+function CartTab() {
+  const qc = useQueryClient();
+  const { notify } = useApp();
+  const [deleteTarget, setDeleteTarget] = useState<SpendingEntry | null>(null);
+
+  const { data: carts = [], isLoading } = useQuery({
+    queryKey: ['spending', 'cart'],
+    queryFn: () => spendingApi.getCart(),
+  });
+
+  const updateCartMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<SpendingEntry> }) =>
+      spendingApi.updateCart(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['spending', 'cart'] }),
+    onError: (err: Error) => notify(err.message, 'error'),
+  });
+
+  const deleteCartMut = useMutation({
+    mutationFn: (id: string) => spendingApi.deleteCart(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['spending', 'cart'] });
+      notify('Cart deleted', 'success');
+    },
+    onError: (err: Error) => notify(err.message, 'error'),
+  });
+
+  function toggleItem(cart: SpendingEntry, productId: string) {
+    const updated = (cart.cartItems ?? []).map((item: CartItem) =>
+      item.productId === productId ? { ...item, checked: !item.checked } : item
+    );
+    updateCartMut.mutate({ id: cart._id!, data: { cartItems: updated } });
+  }
+
+  if (isLoading) return <div className="loading-container"><div className="spinner" /></div>;
+
+  if (carts.length === 0) {
+    return (
+      <div className="empty-state">
+        <div className="empty-state-icon">🛒</div>
+        <p>No shopping carts yet</p>
+        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+          Go to the Products tab, select items, and click "Add to Cart"
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {carts.map(cart => {
+          const items: CartItem[] = cart.cartItems ?? [];
+          const checkedCount = items.filter(i => i.checked).length;
+          const checkedTotal = items.filter(i => i.checked).reduce((s, i) => s + (i.price ?? 0), 0);
+          const allDone = items.length > 0 && checkedCount === items.length;
+          return (
+            <div key={cart._id} className="card" style={{ borderLeft: `3px solid ${allDone ? '#16A34A' : COLOR.primary}` }}>
+              <div className="card-body" style={{ padding: '1rem 1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+                      {allDone ? '✅' : '🛒'} {cart.name ?? 'Shopping List'}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '0.125rem' }}>
+                      {checkedCount}/{items.length} items · {formatCurrency(checkedTotal)} / {formatCurrency(cart.estimatedTotal ?? 0)}
+                    </div>
+                  </div>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ color: '#DC2626' }}
+                    onClick={() => setDeleteTarget(cart)}
+                  >
+                    🗑️
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                  {items.map((item: CartItem) => (
+                    <div
+                      key={item.productId}
+                      onClick={() => toggleItem(cart, item.productId)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.75rem',
+                        padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)',
+                        background: item.checked ? '#F0FDF4' : 'var(--color-surface)',
+                        border: `1px solid ${item.checked ? '#86EFAC' : 'var(--color-border)'}`,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={item.checked}
+                        onChange={() => toggleItem(cart, item.productId)}
+                        onClick={e => e.stopPropagation()}
+                        style={{ width: '1rem', height: '1rem', accentColor: '#16A34A', flexShrink: 0 }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{
+                          fontWeight: 500, fontSize: '0.9rem',
+                          textDecoration: item.checked ? 'line-through' : 'none',
+                          color: item.checked ? 'var(--color-text-muted)' : 'var(--color-text)',
+                        }}>
+                          {item.name}
+                        </span>
+                        {item.unit && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginLeft: '0.375rem' }}>
+                            ({item.unit})
+                          </span>
+                        )}
+                        {item.category && item.category !== 'General' && (
+                          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>{item.category}</div>
+                        )}
+                      </div>
+                      {item.price != null && (
+                        <span style={{
+                          fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap',
+                          color: item.checked ? '#16A34A' : 'var(--color-text)',
+                        }}>
+                          {formatCurrency(item.price)}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget?._id && deleteCartMut.mutate(deleteTarget._id)}
+        title="Delete Cart"
+        message={`Delete this shopping cart? This cannot be undone.`}
+      />
+    </>
+  );
+}
+
 // ─── Calendar Tab ─────────────────────────────────────────────────────────────
 
 function CalendarTab() {
@@ -1152,7 +1295,7 @@ function CalendarTab() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-type Tab = 'transactions' | 'fixed' | 'calendar' | 'products';
+type Tab = 'transactions' | 'fixed' | 'calendar' | 'products' | 'cart';
 
 export default function SpendingPage() {
   const [activeTab, setActiveTab] = useState<Tab>('transactions');
@@ -1202,7 +1345,13 @@ export default function SpendingPage() {
           className={`tab ${activeTab === 'products' ? 'active' : ''}`}
           onClick={() => setActiveTab('products')}
         >
-          🛒 Products
+          📦 Products
+        </button>
+        <button
+          className={`tab ${activeTab === 'cart' ? 'active' : ''}`}
+          onClick={() => setActiveTab('cart')}
+        >
+          🛒 Cart
         </button>
       </div>
 
@@ -1213,6 +1362,7 @@ export default function SpendingPage() {
           {activeTab === 'fixed' && <FixedBillsTab />}
           {activeTab === 'calendar' && <CalendarTab />}
           {activeTab === 'products' && <ShoppingTab />}
+          {activeTab === 'cart' && <CartTab />}
         </div>
       </div>
     </div>

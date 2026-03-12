@@ -10,7 +10,16 @@ export interface BaseEntity {
 
 // Spending
 export type TransactionType = 'expense' | 'income' | 'saving';
-export type SpendingEntryType = 'transaction' | 'fixed' | 'product';
+export type SpendingEntryType = 'transaction' | 'fixed' | 'product' | 'cart';
+
+export interface CartItem {
+  productId: string;
+  name: string;
+  price?: number;
+  unit?: string;
+  category: string;
+  checked: boolean;
+}
 
 export interface SpendingEntry extends BaseEntity {
   entryType: SpendingEntryType;
@@ -24,6 +33,8 @@ export interface SpendingEntry extends BaseEntity {
   name?: string;
   price?: number;
   unit?: string;
+  cartItems?: CartItem[];
+  estimatedTotal?: number;
   status: PlanDoneStatus;
 }
 

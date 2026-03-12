@@ -121,4 +121,54 @@ router.post('/shopping-list', async (req: Request, res: Response, next: NextFunc
   } catch (err) { next(err); }
 });
 
+// ─── Cart ─────────────────────────────────────────────────────────────────────
+
+router.get('/cart', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const items = await spendingService.findAll({ entryType: 'cart' }, { sort: { createdAt: -1 } });
+    res.json(items);
+  } catch (err) { next(err); }
+});
+
+router.post('/cart', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { productIds, name } = req.body as { productIds: string[]; name?: string };
+    const allProducts = await spendingService.findAll({ entryType: 'product' });
+    const selected = allProducts.filter(p => productIds.includes(p._id!));
+    const estimatedTotal = selected.reduce((sum, p) => sum + (p.price ?? 0), 0);
+    const cartItems = selected.map(p => ({
+      productId: p._id!,
+      name: p.name ?? p.category,
+      price: p.price,
+      unit: p.unit,
+      category: p.category,
+      checked: false,
+    }));
+    const item = await spendingService.create({
+      entryType: 'cart',
+      name: name ?? `Shopping List ${new Date().toLocaleDateString()}`,
+      category: 'cart',
+      amount: estimatedTotal,
+      estimatedTotal,
+      cartItems,
+      status: 'plan',
+    } as any);
+    res.status(201).json(item);
+  } catch (err) { next(err); }
+});
+
+router.put('/cart/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const item = await spendingService.update(req.params.id, req.body);
+    res.json(item);
+  } catch (err) { next(err); }
+});
+
+router.delete('/cart/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await spendingService.delete(req.params.id);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
 export default router;
