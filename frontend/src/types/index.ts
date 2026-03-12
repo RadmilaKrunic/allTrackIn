@@ -29,6 +29,8 @@ export interface SpendingEntry extends BaseEntity {
   description?: string;
   transactionType?: TransactionType;
   dayOfMonth?: number;
+  dayOfWeek?: number;
+  frequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
   recurring?: boolean;
   name?: string;
   price?: number;
