@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { format, startOfMonth, endOfMonth, getDay, eachDayOfInterval } from 'date-fns';
 import type { BookEntry, BookStatus, BorrowType } from '../../types';
 import { booksApi } from '../../api/client';
 import { useApp } from '../../contexts/AppContext';
@@ -432,6 +433,7 @@ export default function BooksPage() {
   const [deleteTarget, setDeleteTarget] = useState<BookEntry | null>(null);
   const [form, setForm] = useState<BookFormState>({ ...EMPTY_FORM });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof BookFormState, string>>>({});
+  const [statsMonth, setStatsMonth] = useState(() => new Date());
 
   const { data: allBooks = [], isLoading } = useQuery<BookEntry[]>({
     queryKey: ['books'],
@@ -481,6 +483,58 @@ export default function BooksPage() {
     const year = new Date().getFullYear().toString();
     return allBooks.filter(b => b.status === 'finished' && b.endDate?.startsWith(year)).length;
   }, [allBooks]);
+
+  // Stats by status counts
+  const statusCounts = useMemo(() => {
+    const counts: Record<BookStatus, number> = { reading: 0, finished: 0, paused: 0, wishlist: 0 };
+    for (const b of allBooks) {
+      counts[b.status] = (counts[b.status] || 0) + 1;
+    }
+    return counts;
+  }, [allBooks]);
+
+  // Book events by date for the calendar
+  const bookEventsByDate = useMemo(() => {
+    const map = new Map<string, { type: 'start' | 'end'; book: BookEntry }[]>();
+    for (const b of allBooks) {
+      if (b.startDate) {
+        if (!map.has(b.startDate)) map.set(b.startDate, []);
+        map.get(b.startDate)!.push({ type: 'start', book: b });
+      }
+      if (b.endDate) {
+        if (!map.has(b.endDate)) map.set(b.endDate, []);
+        map.get(b.endDate)!.push({ type: 'end', book: b });
+      }
+    }
+    return map;
+  }, [allBooks]);
+
+  // Calendar days for statsMonth
+  const calendarData = useMemo(() => {
+    const monthStart = startOfMonth(statsMonth);
+    const monthEnd = endOfMonth(statsMonth);
+    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const startDow = getDay(monthStart); // 0=Sun
+    return { days, startDow };
+  }, [statsMonth]);
+
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+  function prevMonth() {
+    setStatsMonth(m => {
+      const d = new Date(m);
+      d.setMonth(d.getMonth() - 1);
+      return d;
+    });
+  }
+
+  function nextMonth() {
+    setStatsMonth(m => {
+      const d = new Date(m);
+      d.setMonth(d.getMonth() + 1);
+      return d;
+    });
+  }
 
   function openAdd() {
     setEditingBook(null);
@@ -546,6 +600,7 @@ export default function BooksPage() {
   }
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
+  const totalBooks = allBooks.length;
 
   return (
     <div className="page-content">
@@ -606,6 +661,219 @@ export default function BooksPage() {
           <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Borrowed</div>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#92400E' }}>{borrowedBooks.length}</div>
           <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>tracked</div>
+        </div>
+      </div>
+
+      {/* Stats by Status + Book Calendar */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '1.25rem',
+        marginBottom: '1.25rem',
+      }}>
+        {/* LEFT: Stats by Status */}
+        <div className="card" style={{ overflow: 'hidden' }}>
+          {/* Card header */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.875rem 1rem',
+            borderBottom: '1px solid var(--color-border)',
+          }}>
+            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>📊 Reading Stats</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <button
+                onClick={prevMonth}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--color-text-secondary)', fontSize: '1rem',
+                  padding: '0.1rem 0.35rem', borderRadius: 'var(--radius-sm)',
+                  lineHeight: 1,
+                }}
+                title="Previous month"
+              >
+                ‹
+              </button>
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 500, minWidth: '6rem', textAlign: 'center' }}>
+                {format(statsMonth, 'MMMM yyyy')}
+              </span>
+              <button
+                onClick={nextMonth}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--color-text-secondary)', fontSize: '1rem',
+                  padding: '0.1rem 0.35rem', borderRadius: 'var(--radius-sm)',
+                  lineHeight: 1,
+                }}
+                title="Next month"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+          {/* Card body */}
+          <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {totalBooks === 0 ? (
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', margin: 0, textAlign: 'center', padding: '0.5rem 0' }}>
+                No books yet
+              </p>
+            ) : (
+              BOOK_STATUSES.filter(s => statusCounts[s] > 0).map(s => {
+                const cfg = STATUS_CONFIG[s];
+                const count = statusCounts[s];
+                const pct = totalBooks > 0 ? Math.round((count / totalBooks) * 100) : 0;
+                return (
+                  <div key={s}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <span>{cfg.icon}</span>
+                        <span>{cfg.label}</span>
+                      </span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                        {count} &middot; {pct}%
+                      </span>
+                    </div>
+                    <div style={{
+                      height: '0.5rem',
+                      background: 'var(--color-surface)',
+                      borderRadius: '999px',
+                      overflow: 'hidden',
+                      border: '1px solid var(--color-border)',
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${pct}%`,
+                        background: cfg.text,
+                        borderRadius: '999px',
+                        transition: 'width 0.4s ease',
+                        minWidth: pct > 0 ? '0.375rem' : '0',
+                      }} />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT: Book Calendar */}
+        <div className="card" style={{ overflow: 'hidden' }}>
+          {/* Card header */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.875rem 1rem',
+            borderBottom: '1px solid var(--color-border)',
+          }}>
+            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>📅 Book Activity</span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+              {format(statsMonth, 'MMMM yyyy')}
+            </span>
+          </div>
+          {/* Calendar body */}
+          <div style={{ padding: '0.75rem 0.875rem' }}>
+            {/* Day-of-week headers */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: '0.15rem',
+              marginBottom: '0.25rem',
+            }}>
+              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                <div key={d} style={{
+                  textAlign: 'center',
+                  fontSize: '0.68rem',
+                  fontWeight: 600,
+                  color: 'var(--color-text-muted)',
+                  padding: '0.1rem 0',
+                }}>
+                  {d}
+                </div>
+              ))}
+            </div>
+            {/* Calendar grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: '0.15rem',
+            }}>
+              {/* Leading blank cells */}
+              {Array.from({ length: calendarData.startDow }).map((_, i) => (
+                <div key={`blank-${i}`} />
+              ))}
+              {/* Day cells */}
+              {calendarData.days.map(day => {
+                const dayStr = format(day, 'yyyy-MM-dd');
+                const events = bookEventsByDate.get(dayStr) ?? [];
+                const isToday = dayStr === todayStr;
+
+                // Determine dominant event type (end takes priority over start)
+                const hasEnd = events.some(e => e.type === 'end');
+                const hasStart = events.some(e => e.type === 'start');
+                const hasEvent = hasEnd || hasStart;
+
+                let cellBg = 'var(--color-surface)';
+                let cellIcon: string | null = null;
+                let titleText = '';
+
+                if (hasEnd) {
+                  cellBg = '#DCFCE7'; // green-100
+                  cellIcon = '✅';
+                  const books = events.filter(e => e.type === 'end').map(e => e.book.title);
+                  titleText = `Finished: ${books.join(', ')}`;
+                } else if (hasStart) {
+                  cellBg = '#DBEAFE'; // blue-100
+                  cellIcon = '📖';
+                  const books = events.filter(e => e.type === 'start').map(e => e.book.title);
+                  titleText = `Started: ${books.join(', ')}`;
+                }
+
+                return (
+                  <div
+                    key={dayStr}
+                    title={titleText || undefined}
+                    style={{
+                      aspectRatio: '1',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 'var(--radius-sm)',
+                      background: hasEvent ? cellBg : 'var(--color-surface)',
+                      border: isToday
+                        ? `2px solid ${C.primary}`
+                        : '1px solid transparent',
+                      fontSize: cellIcon ? '0.7rem' : '0.72rem',
+                      color: hasEvent ? (hasEnd ? '#15803D' : '#1D4ED8') : 'var(--color-text-secondary)',
+                      fontWeight: isToday ? 700 : 400,
+                      lineHeight: 1,
+                      gap: '0.05rem',
+                      cursor: hasEvent ? 'default' : 'default',
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    {cellIcon && (
+                      <span style={{ fontSize: '0.65rem', lineHeight: 1 }}>{cellIcon}</span>
+                    )}
+                    <span>{format(day, 'd')}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.625rem', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <div style={{ width: '0.7rem', height: '0.7rem', borderRadius: '2px', background: '#DBEAFE', border: '1px solid #BFDBFE' }} />
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>📖 Started</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <div style={{ width: '0.7rem', height: '0.7rem', borderRadius: '2px', background: '#DCFCE7', border: '1px solid #BBF7D0' }} />
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>✅ Finished</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { EventEntry, EventType } from '../../types';
+import { format, parseISO, startOfMonth, endOfMonth, getDay, eachDayOfInterval } from 'date-fns';
+import type { EventEntry, EventType, PlanDoneStatus } from '../../types';
 import { eventsApi } from '../../api/client';
 import { useApp } from '../../contexts/AppContext';
 import { MODULE_COLORS } from '../../themes/themes';
@@ -79,6 +80,10 @@ function groupByDate(events: EventEntry[]): Map<string, EventEntry[]> {
   return map;
 }
 
+function smartStatus(dateStr: string): PlanDoneStatus {
+  return dateStr > todayStr() ? 'plan' : 'done';
+}
+
 interface EventFormState {
   name: string;
   date: string;
@@ -98,6 +103,7 @@ export default function EventsPage() {
   const [view, setView] = useState<'list' | 'upcoming'>('list');
   const [navYear, setNavYear] = useState(() => new Date().getFullYear());
   const [navMonth, setNavMonth] = useState(() => new Date().getMonth());
+  const [statsMonth, setStatsMonth] = useState(() => new Date());
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<EventEntry | null>(null);
@@ -152,9 +158,10 @@ export default function EventsPage() {
     onError: (err: Error) => notify(err.message, 'error'),
   });
 
-  function openAdd() {
+  function openAdd(dateStr?: string) {
+    const date = dateStr ?? todayStr();
     setEditingEvent(null);
-    setForm({ ...EMPTY_FORM, date: todayStr() });
+    setForm({ ...EMPTY_FORM, date, status: smartStatus(date) });
     setModalOpen(true);
   }
 
@@ -231,6 +238,45 @@ export default function EventsPage() {
     setNavMonth(now.getMonth());
   }
 
+  // Stats for statsMonth
+  const monthStats = useMemo(() => {
+    const monthStart = startOfMonth(statsMonth);
+    const monthEnd = endOfMonth(statsMonth);
+    const allDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const counts: Record<EventType, number> = {
+      birthday: 0, vacation: 0, appointment: 0, reminder: 0, holiday: 0, other: 0,
+    };
+    let total = 0;
+    for (const d of allDays) {
+      const ds = format(d, 'yyyy-MM-dd');
+      for (const ev of allEvents) {
+        if (ev.date === ds) {
+          counts[ev.eventType]++;
+          total++;
+        }
+      }
+    }
+    return { counts, total };
+  }, [allEvents, statsMonth]);
+
+  // Build a date -> events index for the stats month calendar
+  const eventsByDate = useMemo(() => {
+    const map = new Map<string, EventEntry[]>();
+    for (const ev of allEvents) {
+      if (!map.has(ev.date)) map.set(ev.date, []);
+      map.get(ev.date)!.push(ev);
+    }
+    return map;
+  }, [allEvents]);
+
+  // Mini calendar days for statsMonth
+  const calendarDays = useMemo(() => {
+    const monthStart = startOfMonth(statsMonth);
+    const monthEnd = endOfMonth(statsMonth);
+    return eachDayOfInterval({ start: monthStart, end: monthEnd });
+  }, [statsMonth]);
+  const calPadStart = getDay(startOfMonth(statsMonth)); // 0=Sun
+
   const today = todayStr();
 
   return (
@@ -245,9 +291,130 @@ export default function EventsPage() {
             {allEvents.length} event{allEvents.length !== 1 ? 's' : ''} total
           </p>
         </div>
-        <button className="btn btn-primary" onClick={openAdd} style={{ background: C.primary }}>
+        <button className="btn btn-primary" onClick={() => openAdd()} style={{ background: C.primary }}>
           + Add Event
         </button>
+      </div>
+
+      {/* Stats + Mini Calendar row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+        {/* Monthly Stats Card */}
+        <div className="card">
+          <div className="card-header">
+            <h3 style={{ margin: 0, fontSize: '0.95rem' }}>📊 Stats</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setStatsMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
+              >‹</button>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, minWidth: 90, textAlign: 'center' }}>
+                {format(statsMonth, 'MMM yyyy')}
+              </span>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setStatsMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
+              >›</button>
+            </div>
+          </div>
+          <div className="card-body">
+            {monthStats.total === 0 ? (
+              <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '0.5rem 0' }}>
+                No events this month
+              </p>
+            ) : (
+              <>
+                {/* Count chips */}
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                  {EVENT_TYPES.map((et) => {
+                    const cfg = EVENT_TYPE_COLORS[et];
+                    const count = monthStats.counts[et];
+                    if (count === 0) return null;
+                    return (
+                      <div key={et} style={{
+                        display: 'flex', alignItems: 'center', gap: '0.35rem',
+                        background: cfg.bg, border: `1px solid ${cfg.border}`,
+                        borderRadius: 'var(--radius-sm)', padding: '0.35rem 0.65rem',
+                      }}>
+                        <span>{EVENT_ICONS[et]}</span>
+                        <span style={{ fontWeight: 700, fontSize: '0.95rem', color: cfg.text }}>{count}</span>
+                        <span style={{ fontSize: '0.72rem', color: cfg.text, opacity: 0.8 }}>
+                          {et.charAt(0).toUpperCase() + et.slice(1)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Progress bars */}
+                {EVENT_TYPES.map((et) => {
+                  const cfg = EVENT_TYPE_COLORS[et];
+                  const count = monthStats.counts[et];
+                  const pct = monthStats.total > 0 ? Math.round((count / monthStats.total) * 100) : 0;
+                  if (count === 0) return null;
+                  return (
+                    <div key={et} style={{ marginBottom: '0.625rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>
+                          {EVENT_ICONS[et]} {et.charAt(0).toUpperCase() + et.slice(1)}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: cfg.text }}>
+                          {count} · {pct}%
+                        </span>
+                      </div>
+                      <div style={{ height: '6px', background: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ width: `${pct}%`, height: '100%', background: cfg.border, borderRadius: '3px', transition: 'width 0.4s' }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Mini Calendar Card */}
+        <div className="card">
+          <div className="card-header">
+            <h3 style={{ margin: 0, fontSize: '0.95rem' }}>📅 Events Calendar</h3>
+          </div>
+          <div style={{ padding: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '4px' }}>
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                <div key={i} style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--color-text-muted)', padding: '2px 0' }}>{d}</div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+              {Array.from({ length: calPadStart }).map((_, i) => <div key={`p${i}`} />)}
+              {calendarDays.map((day) => {
+                const ds = format(day, 'yyyy-MM-dd');
+                const dayEvents = eventsByDate.get(ds);
+                const firstEvent = dayEvents?.[0];
+                const isToday = ds === today;
+                const cfg = firstEvent ? EVENT_TYPE_COLORS[firstEvent.eventType] : null;
+                return (
+                  <button
+                    key={ds}
+                    onClick={() => firstEvent ? openEdit(firstEvent) : openAdd(ds)}
+                    title={firstEvent ? `${firstEvent.name}${dayEvents && dayEvents.length > 1 ? ` +${dayEvents.length - 1} more` : ''}` : 'Click to add event'}
+                    style={{
+                      aspectRatio: '1',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px',
+                      borderRadius: '4px',
+                      border: isToday ? `2px solid ${C.primary}` : 'none',
+                      background: cfg ? cfg.bg : 'var(--color-surface)',
+                      cursor: 'pointer', fontFamily: 'inherit',
+                      fontSize: '0.65rem', color: isToday ? C.primary : cfg ? cfg.text : 'var(--color-text)',
+                      fontWeight: isToday ? 700 : 400,
+                    }}
+                  >
+                    {format(day, 'd')}
+                    {firstEvent && <span style={{ fontSize: '0.6rem' }}>{EVENT_ICONS[firstEvent.eventType]}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* View Tabs */}
@@ -569,6 +736,10 @@ function EventForm({ form, onChange }: EventFormProps) {
     onChange({ ...form, [key]: value });
   }
 
+  function handleDateChange(d: string) {
+    onChange({ ...form, date: d, status: d > new Date().toISOString().slice(0, 10) ? 'plan' : 'done' });
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
       <div className="form-group">
@@ -588,7 +759,7 @@ function EventForm({ form, onChange }: EventFormProps) {
             className="form-input"
             type="date"
             value={form.date}
-            onChange={(e) => set('date', e.target.value)}
+            onChange={(e) => handleDateChange(e.target.value)}
           />
         </div>
         <div className="form-group">

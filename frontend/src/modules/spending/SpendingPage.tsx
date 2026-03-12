@@ -1,5 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  format, startOfMonth, endOfMonth, getDay, eachDayOfInterval,
+  addMonths, subMonths,
+} from 'date-fns';
 import { spendingApi } from '../../api/client';
 import { useApp } from '../../contexts/AppContext';
 import { MODULE_COLORS } from '../../themes/themes';
@@ -1048,9 +1052,107 @@ function ShoppingTab() {
   );
 }
 
+// ─── Calendar Tab ─────────────────────────────────────────────────────────────
+
+function CalendarTab() {
+  const [calMonth, setCalMonth] = useState(new Date());
+
+  const { data: transactions = [] } = useQuery({
+    queryKey: ['spending', 'transactions'],
+    queryFn: () => spendingApi.getTransactions(),
+  });
+
+  const monthStr = format(calMonth, 'yyyy-MM');
+  const monthStart = startOfMonth(calMonth);
+  const monthEnd = endOfMonth(calMonth);
+  const calDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const firstDow = getDay(monthStart);
+
+  const txByDate = useMemo(() => {
+    const map = new Map<string, typeof transactions>();
+    transactions.forEach(tx => {
+      if (!tx.date) return;
+      const arr = map.get(tx.date) ?? [];
+      arr.push(tx);
+      map.set(tx.date, arr);
+    });
+    return map;
+  }, [transactions]);
+
+  const monthTotal = useMemo(() => {
+    return transactions
+      .filter(tx => (tx.date ?? '').startsWith(monthStr) && tx.transactionType === 'expense' && tx.status === 'done')
+      .reduce((s, tx) => s + tx.amount, 0);
+  }, [transactions, monthStr]);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  return (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button className="btn btn-icon btn-ghost btn-sm" onClick={() => setCalMonth(m => subMonths(m, 1))}>‹</button>
+          <span style={{ fontWeight: 700, fontSize: '1rem' }}>{format(calMonth, 'MMMM yyyy')}</span>
+          <button className="btn btn-icon btn-ghost btn-sm" onClick={() => setCalMonth(m => addMonths(m, 1))}>›</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setCalMonth(new Date())}>Today</button>
+        </div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+          Expenses: <strong style={{ color: '#DC2626' }}>{formatCurrency(monthTotal)}</strong>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.375rem' }}>
+        {WEEK_DAYS.map(d => (
+          <div key={d} style={{ textAlign: 'center', fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-muted)', padding: '0.25rem 0' }}>{d}</div>
+        ))}
+        {Array.from({ length: firstDow }, (_, i) => <div key={`e${i}`} />)}
+        {calDays.map(day => {
+          const dateStr = format(day, 'yyyy-MM-dd');
+          const dayTx = txByDate.get(dateStr) ?? [];
+          const dayExpenses = dayTx.filter(tx => tx.transactionType === 'expense').reduce((s, tx) => s + tx.amount, 0);
+          const dayIncome = dayTx.filter(tx => tx.transactionType === 'income').reduce((s, tx) => s + tx.amount, 0);
+          const isToday = dateStr === todayStr;
+          const hasTx = dayTx.length > 0;
+          return (
+            <div key={dateStr} style={{
+              minHeight: '5rem', padding: '0.375rem', borderRadius: 'var(--radius-md)',
+              border: `1.5px solid ${isToday ? COLOR.primary : 'var(--color-border)'}`,
+              background: isToday ? COLOR.soft : hasTx ? `${COLOR.primary}08` : 'var(--color-surface)',
+            }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: isToday ? 700 : 500, color: isToday ? COLOR.primary : 'var(--color-text)', marginBottom: '0.25rem' }}>
+                {format(day, 'd')}
+              </div>
+              {dayExpenses > 0 && (
+                <div style={{ fontSize: '0.65rem', color: '#DC2626', fontWeight: 600, lineHeight: 1.3 }}>
+                  -{formatCurrency(dayExpenses)}
+                </div>
+              )}
+              {dayIncome > 0 && (
+                <div style={{ fontSize: '0.65rem', color: '#16A34A', fontWeight: 600, lineHeight: 1.3 }}>
+                  +{formatCurrency(dayIncome)}
+                </div>
+              )}
+              {dayTx.map((tx, i) => (
+                <div key={i} style={{
+                  fontSize: '0.6rem', color: 'var(--color-text-muted)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  marginTop: '0.1rem',
+                }}>
+                  {tx.category}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-type Tab = 'transactions' | 'fixed' | 'shopping';
+type Tab = 'transactions' | 'fixed' | 'calendar' | 'products';
 
 export default function SpendingPage() {
   const [activeTab, setActiveTab] = useState<Tab>('transactions');
@@ -1091,10 +1193,16 @@ export default function SpendingPage() {
           🔄 Fixed Bills
         </button>
         <button
-          className={`tab ${activeTab === 'shopping' ? 'active' : ''}`}
-          onClick={() => setActiveTab('shopping')}
+          className={`tab ${activeTab === 'calendar' ? 'active' : ''}`}
+          onClick={() => setActiveTab('calendar')}
         >
-          🛒 Shopping
+          📅 Calendar
+        </button>
+        <button
+          className={`tab ${activeTab === 'products' ? 'active' : ''}`}
+          onClick={() => setActiveTab('products')}
+        >
+          🛒 Products
         </button>
       </div>
 
@@ -1103,7 +1211,8 @@ export default function SpendingPage() {
         <div className="card-body">
           {activeTab === 'transactions' && <TransactionsTab />}
           {activeTab === 'fixed' && <FixedBillsTab />}
-          {activeTab === 'shopping' && <ShoppingTab />}
+          {activeTab === 'calendar' && <CalendarTab />}
+          {activeTab === 'products' && <ShoppingTab />}
         </div>
       </div>
     </div>
