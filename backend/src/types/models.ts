@@ -96,7 +96,7 @@ export interface WorkEntry extends BaseDocument {
 }
 
 // ─── Eating ────────────────────────────────────────────────────────────────
-export type EatingEntryType = 'daily_log' | 'recipe';
+export type EatingEntryType = 'daily_log' | 'recipe' | 'diet_log';
 
 export interface EatingEntry extends BaseDocument {
   entryType: EatingEntryType;

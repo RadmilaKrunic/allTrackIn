@@ -20,15 +20,24 @@ const LOCATION_CONFIG: Record<WorkLocationType, { icon: string; label: string; c
 
 const LOCATION_TYPES: WorkLocationType[] = ['home', 'office', 'travel', 'other'];
 
-const EMPTY_FORM = {
-  date: format(new Date(), 'yyyy-MM-dd'),
-  locationType: 'home' as WorkLocationType,
-  tableNumber: '',
-  startTime: '',
-  endTime: '',
-  notes: '',
-  status: 'done' as PlanDoneStatus,
-};
+function smartStatus(dateStr: string): PlanDoneStatus {
+  return dateStr > format(new Date(), 'yyyy-MM-dd') ? 'plan' : 'done';
+}
+
+function makeEmptyForm(dateStr?: string) {
+  const d = dateStr ?? format(new Date(), 'yyyy-MM-dd');
+  return {
+    date: d,
+    locationType: 'home' as WorkLocationType,
+    tableNumber: '',
+    startTime: '',
+    endTime: '',
+    notes: '',
+    status: smartStatus(d),
+  };
+}
+
+const EMPTY_FORM = makeEmptyForm();
 
 type WorkFormState = typeof EMPTY_FORM;
 
@@ -77,7 +86,8 @@ export default function WorkPage() {
 
   function openAdd(prefill?: Partial<WorkFormState>) {
     setEditing(null);
-    setForm({ ...EMPTY_FORM, date: todayStr, ...prefill });
+    const dateStr = prefill?.date ?? todayStr;
+    setForm({ ...makeEmptyForm(dateStr), ...prefill });
     setShowForm(true);
   }
 
@@ -575,7 +585,7 @@ function WorkForm({ form, onChange }: WorkFormProps) {
             type="date"
             className="form-input"
             value={form.date}
-            onChange={(e) => set('date', e.target.value)}
+            onChange={(e) => onChange({ ...form, date: e.target.value, status: smartStatus(e.target.value) })}
           />
         </div>
         <div className="form-group">

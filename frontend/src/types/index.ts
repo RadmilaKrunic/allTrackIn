@@ -91,7 +91,7 @@ export interface WorkEntry extends BaseEntity {
 }
 
 // Eating
-export type EatingEntryType = 'daily_log' | 'recipe';
+export type EatingEntryType = 'daily_log' | 'recipe' | 'diet_log';
 
 export interface EatingEntry extends BaseEntity {
   entryType: EatingEntryType;
