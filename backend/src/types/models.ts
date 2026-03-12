@@ -27,6 +27,8 @@ export interface SpendingEntry extends BaseDocument {
   transactionType?: TransactionType;
   // fixed bill extras
   dayOfMonth?: number;
+  dayOfWeek?: number;
+  frequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
   recurring?: boolean;
   // product extras
   name?: string;

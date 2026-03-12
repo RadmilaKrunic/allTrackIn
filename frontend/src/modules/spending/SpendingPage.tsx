@@ -181,8 +181,21 @@ function TransactionForm({ initial = EMPTY_TRANSACTION, onSubmit, onCancel, load
 
 // ─── Fixed Bill Form ─────────────────────────────────────────────────────────
 
+type FixedFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+const FREQ_LABELS: Record<FixedFrequency, string> = {
+  daily: '📆 Daily',
+  weekly: '🗓 Weekly',
+  monthly: '📅 Monthly',
+  yearly: '🗃 Yearly',
+};
+
+const WEEK_DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 interface FixedFormData {
+  frequency: FixedFrequency;
   dayOfMonth: string;
+  dayOfWeek: string;
   amount: string;
   category: string;
   description: string;
@@ -190,7 +203,9 @@ interface FixedFormData {
 }
 
 const EMPTY_FIXED: FixedFormData = {
+  frequency: 'monthly',
   dayOfMonth: '1',
+  dayOfWeek: '1',
   amount: '',
   category: '',
   description: '',
@@ -214,9 +229,11 @@ function FixedForm({ initial = EMPTY_FIXED, onSubmit, onCancel, loading, submitL
 
   function validate(): boolean {
     const e: typeof errors = {};
-    const day = Number(form.dayOfMonth);
-    if (!form.dayOfMonth || isNaN(day) || day < 1 || day > 31)
-      e.dayOfMonth = 'Enter a valid day (1-31)';
+    if (form.frequency === 'monthly') {
+      const day = Number(form.dayOfMonth);
+      if (!form.dayOfMonth || isNaN(day) || day < 1 || day > 31)
+        e.dayOfMonth = 'Enter a valid day (1-31)';
+    }
     if (!form.amount || isNaN(Number(form.amount)) || Number(form.amount) <= 0)
       e.amount = 'Enter a valid amount';
     if (!form.category.trim()) e.category = 'Category is required';
@@ -231,20 +248,56 @@ function FixedForm({ initial = EMPTY_FIXED, onSubmit, onCancel, loading, submitL
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="form-row">
-        <div className="form-group">
-          <label className="form-label">Day of Month *</label>
-          <input
-            className="form-input"
-            type="number"
-            min="1"
-            max="31"
-            placeholder="1"
-            value={form.dayOfMonth}
-            onChange={e => set('dayOfMonth', e.target.value)}
-          />
-          {errors.dayOfMonth && <span style={{ color: '#DC2626', fontSize: '0.78rem' }}>{errors.dayOfMonth}</span>}
+      <div className="form-group">
+        <label className="form-label">Frequency *</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+          {(['daily', 'weekly', 'monthly', 'yearly'] as FixedFrequency[]).map(f => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => set('frequency', f)}
+              style={{
+                padding: '0.5rem 0.25rem', borderRadius: 'var(--radius-md)', fontFamily: 'inherit',
+                border: `1.5px solid ${form.frequency === f ? COLOR.primary : 'var(--color-border)'}`,
+                background: form.frequency === f ? COLOR.soft : 'var(--color-surface)',
+                color: form.frequency === f ? COLOR.primary : 'var(--color-text)',
+                fontWeight: form.frequency === f ? 700 : 400, fontSize: '0.78rem', cursor: 'pointer',
+              }}
+            >
+              {FREQ_LABELS[f]}
+            </button>
+          ))}
         </div>
+      </div>
+
+      <div className="form-row">
+        {form.frequency === 'monthly' && (
+          <div className="form-group">
+            <label className="form-label">Day of Month *</label>
+            <input
+              className="form-input"
+              type="number"
+              min="1"
+              max="31"
+              placeholder="1"
+              value={form.dayOfMonth}
+              onChange={e => set('dayOfMonth', e.target.value)}
+            />
+            {errors.dayOfMonth && <span style={{ color: '#DC2626', fontSize: '0.78rem' }}>{errors.dayOfMonth}</span>}
+          </div>
+        )}
+        {form.frequency === 'weekly' && (
+          <div className="form-group">
+            <label className="form-label">Day of Week *</label>
+            <select
+              className="form-select"
+              value={form.dayOfWeek}
+              onChange={e => set('dayOfWeek', e.target.value)}
+            >
+              {WEEK_DAY_LABELS.map((d, i) => <option key={i} value={i}>{d}</option>)}
+            </select>
+          </div>
+        )}
         <div className="form-group">
           <label className="form-label">Amount *</label>
           <input
@@ -301,6 +354,14 @@ function FixedForm({ initial = EMPTY_FIXED, onSubmit, onCancel, loading, submitL
       </div>
     </form>
   );
+}
+
+function fixedScheduleLabel(bill: SpendingEntry): string {
+  const freq = bill.frequency ?? 'monthly';
+  if (freq === 'daily') return 'Daily';
+  if (freq === 'weekly') return `Every ${WEEK_DAY_LABELS[bill.dayOfWeek ?? 1]}`;
+  if (freq === 'yearly') return 'Yearly';
+  return `Day ${bill.dayOfMonth ?? '?'} of month`;
 }
 
 // ─── Product Form ─────────────────────────────────────────────────────────────
@@ -429,11 +490,32 @@ function TransactionsTab() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<SpendingEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SpendingEntry | null>(null);
+  const [fromFixedOpen, setFromFixedOpen] = useState(false);
+  const [prefillTx, setPrefillTx] = useState<TransactionFormData | undefined>();
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['spending', 'transactions'],
     queryFn: () => spendingApi.getTransactions(),
   });
+
+  const { data: fixedBills = [] } = useQuery({
+    queryKey: ['spending', 'fixed'],
+    queryFn: () => spendingApi.getFixed(),
+  });
+
+  function openFromFixed(bill: SpendingEntry) {
+    setPrefillTx({
+      date: today(),
+      amount: String(bill.amount),
+      transactionType: 'expense',
+      category: bill.category,
+      description: bill.description ?? '',
+      status: 'done',
+    });
+    setFromFixedOpen(false);
+    setEditing(null);
+    setModalOpen(true);
+  }
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<SpendingEntry>) => spendingApi.createTransaction(data),
@@ -548,11 +630,17 @@ function TransactionsTab() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '1rem' }}>
+        <button
+          className="btn btn-secondary"
+          onClick={() => setFromFixedOpen(true)}
+        >
+          📋 From Fixed
+        </button>
         <button
           className="btn btn-primary"
           style={{ background: COLOR.primary }}
-          onClick={() => setModalOpen(true)}
+          onClick={() => { setPrefillTx(undefined); setModalOpen(true); }}
         >
           + Add Transaction
         </button>
@@ -603,13 +691,57 @@ function TransactionsTab() {
       )}
 
       {/* Add modal */}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Add Transaction">
+      <Modal isOpen={modalOpen} onClose={() => { setModalOpen(false); setPrefillTx(undefined); }} title="Add Transaction">
         <TransactionForm
+          initial={prefillTx}
           onSubmit={handleCreate}
-          onCancel={() => setModalOpen(false)}
+          onCancel={() => { setModalOpen(false); setPrefillTx(undefined); }}
           loading={createMutation.isPending}
           submitLabel="Add Transaction"
         />
+      </Modal>
+
+      {/* From Fixed picker */}
+      <Modal isOpen={fromFixedOpen} onClose={() => setFromFixedOpen(false)} title="Add from Fixed Bills">
+        {fixedBills.length === 0 ? (
+          <div className="empty-state" style={{ padding: '1.5rem 0' }}>
+            <div className="empty-state-icon">🔄</div>
+            <p>No fixed bills yet. Add some in the Fixed Bills tab.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', margin: '0 0 0.5rem' }}>
+              Select a bill to pre-fill the transaction form:
+            </p>
+            {fixedBills.map(bill => (
+              <button
+                key={bill._id}
+                type="button"
+                onClick={() => openFromFixed(bill)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
+                  border: '1.5px solid var(--color-border)',
+                  background: 'var(--color-surface)',
+                  cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                  transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = COLOR.primary)}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--color-border)')}
+              >
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{bill.category}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                    {fixedScheduleLabel(bill)}{bill.description ? ` · ${bill.description}` : ''}
+                  </div>
+                </div>
+                <span style={{ fontWeight: 700, color: '#DC2626', fontSize: '0.95rem' }}>
+                  {formatCurrency(bill.amount)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </Modal>
 
       {/* Edit modal */}
@@ -686,7 +818,9 @@ function FixedBillsTab() {
   function handleCreate(form: FixedFormData) {
     createMutation.mutate({
       entryType: 'fixed',
-      dayOfMonth: Number(form.dayOfMonth),
+      frequency: form.frequency,
+      dayOfMonth: form.frequency === 'monthly' ? Number(form.dayOfMonth) : undefined,
+      dayOfWeek: form.frequency === 'weekly' ? Number(form.dayOfWeek) : undefined,
       amount: Number(form.amount),
       category: form.category,
       description: form.description || undefined,
@@ -699,7 +833,9 @@ function FixedBillsTab() {
     updateMutation.mutate({
       id: editing._id,
       data: {
-        dayOfMonth: Number(form.dayOfMonth),
+        frequency: form.frequency,
+        dayOfMonth: form.frequency === 'monthly' ? Number(form.dayOfMonth) : undefined,
+        dayOfWeek: form.frequency === 'weekly' ? Number(form.dayOfWeek) : undefined,
         amount: Number(form.amount),
         category: form.category,
         description: form.description || undefined,
@@ -710,7 +846,9 @@ function FixedBillsTab() {
 
   function toFormData(entry: SpendingEntry): FixedFormData {
     return {
+      frequency: (entry.frequency as FixedFrequency) ?? 'monthly',
       dayOfMonth: String(entry.dayOfMonth ?? 1),
+      dayOfWeek: String(entry.dayOfWeek ?? 1),
       amount: String(entry.amount),
       category: entry.category,
       description: entry.description ?? '',
@@ -718,7 +856,7 @@ function FixedBillsTab() {
     };
   }
 
-  const sorted = [...fixed].sort((a, b) => (a.dayOfMonth ?? 0) - (b.dayOfMonth ?? 0));
+  const sorted = [...fixed].sort((a, b) => a.category.localeCompare(b.category));
 
   return (
     <>
@@ -754,14 +892,16 @@ function FixedBillsTab() {
                 borderRadius: 'var(--radius-md)',
                 background: COLOR.soft,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 700, fontSize: '0.85rem', color: COLOR.text,
-                flexShrink: 0,
+                fontSize: '1.1rem', flexShrink: 0,
               }}>
-                {bill.dayOfMonth}
+                {bill.frequency === 'daily' ? '📆' : bill.frequency === 'weekly' ? '🗓' : bill.frequency === 'yearly' ? '🗃' : '📅'}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{bill.category}</span>
+                  <span className="badge" style={{ background: COLOR.soft, color: COLOR.text, fontSize: '0.7rem' }}>
+                    {fixedScheduleLabel(bill)}
+                  </span>
                   <StatusBadge status={bill.status} />
                 </div>
                 {bill.description && (
