@@ -62,6 +62,14 @@ export const spendingApi = {
     http.post<{ items: SpendingEntry[]; estimatedTotal: number }, { items: SpendingEntry[]; estimatedTotal: number }>(
       '/spending/shopping-list', { productIds }
     ),
+
+  getCart: () => http.get<SpendingEntry[], SpendingEntry[]>('/spending/cart'),
+  createCart: (productIds: string[], name?: string) =>
+    http.post<SpendingEntry, SpendingEntry>('/spending/cart', { productIds, name }),
+  updateCart: (id: string, data: Partial<SpendingEntry>) =>
+    http.put<SpendingEntry, SpendingEntry>(`/spending/cart/${id}`, data),
+  deleteCart: (id: string) => http.delete(`/spending/cart/${id}`),
+
   getSummary: (params?: Record<string, unknown>) =>
     http.get('/spending/summary', { params }),
 };
