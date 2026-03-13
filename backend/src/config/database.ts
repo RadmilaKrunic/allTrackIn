@@ -19,4 +19,6 @@ export const db = {
   eating: createStore('eating'),
   settings: createStore('settings'),
   quotes: createStore('quotes'),
+  notes: createStore('notes'),
+  period: createStore('period'),
 };

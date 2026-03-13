@@ -9,7 +9,10 @@ interface Props {
   onDayClick?: (day: Date, items: Array<Record<string, unknown>>) => void;
 }
 
-type CalendarItem = Record<string, unknown> & { module?: string; date?: string };
+type CalendarItem = Record<string, unknown> & { module?: string; date?: string; startDate?: string };
+
+// Modules to show dots for (not all)
+const DOT_MODULES = ['spending', 'training', 'events', 'work', 'eating', 'notes', 'period'];
 
 export default function CalendarView({ onDayClick }: Props) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -34,7 +37,7 @@ export default function CalendarView({ onDayClick }: Props) {
 
   const getItemsForDay = (day: Date): CalendarItem[] => {
     const dateStr = format(day, 'yyyy-MM-dd');
-    return allItems.filter(item => item.date === dateStr);
+    return allItems.filter(item => item.date === dateStr || item.startDate === dateStr);
   };
 
   const WEEK_DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -64,7 +67,7 @@ export default function CalendarView({ onDayClick }: Props) {
           {days.map(day => {
             const items = getItemsForDay(day);
             const isCurrentDay = isToday(day);
-            const moduleTypes = [...new Set(items.map(i => i.module as string).filter(Boolean))];
+            const moduleTypes = [...new Set(items.map(i => i.module as string).filter(m => m && DOT_MODULES.includes(m)))];
 
             return (
               <button
@@ -101,9 +104,9 @@ export default function CalendarView({ onDayClick }: Props) {
 
         {/* Legend */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
-          {Object.entries(MODULE_COLORS).map(([mod, colors]) => (
+          {DOT_MODULES.filter(m => m in MODULE_COLORS).map(mod => (
             <span key={mod} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: colors.primary, display: 'inline-block' }} />
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: MODULE_COLORS[mod]?.primary, display: 'inline-block' }} />
               {mod.charAt(0).toUpperCase() + mod.slice(1)}
             </span>
           ))}

@@ -8,6 +8,40 @@ export interface BaseEntity {
   updatedAt?: string;
 }
 
+// Notes
+export interface NoteEntry extends BaseEntity {
+  date: string;
+  title?: string;
+  text: string;
+}
+
+// Period
+export interface PeriodEntry extends BaseEntity {
+  startDate: string;
+  endDate?: string;
+  bleedingDays?: number;
+  symptoms?: string[];
+  mood?: string;
+  notes?: string;
+}
+
+export interface PeriodSettings extends BaseEntity {
+  type?: 'period_settings';
+  averageCycleLength: number;
+  averageBleedingDays: number;
+  lastPeriodStart?: string;
+}
+
+export interface PeriodPredictions {
+  averageCycleLength: number;
+  averageBleedingDays: number;
+  lastPeriodStart: string | null;
+  predictions: Array<{ startDate: string; endDate: string; cycleNumber: number }>;
+}
+
+// Module preferences
+export type ModuleKey = 'spending' | 'training' | 'books' | 'events' | 'work' | 'eating' | 'period';
+
 // Spending
 export type TransactionType = 'expense' | 'income' | 'saving';
 export type SpendingEntryType = 'transaction' | 'fixed' | 'product' | 'cart';
@@ -137,6 +171,7 @@ export interface Quote extends BaseEntity {
 export interface Preferences extends BaseEntity {
   type: 'preferences';
   theme: string;
+  enabledModules?: ModuleKey[];
 }
 
 // Dashboard
@@ -155,6 +190,8 @@ export interface CalendarData {
   events: Array<EventEntry & { module: string }>;
   work: Array<WorkEntry & { module: string }>;
   eating: Array<EatingEntry & { module: string }>;
+  notes: Array<NoteEntry & { module: string }>;
+  period: Array<PeriodEntry & { module: string }>;
 }
 
 // Theme
