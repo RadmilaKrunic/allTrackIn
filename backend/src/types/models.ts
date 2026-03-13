@@ -127,6 +127,19 @@ export interface EatingEntry extends BaseDocument {
   tags?: string[];
 }
 
+// ─── Todo ──────────────────────────────────────────────────────────────────
+export interface TodoItem {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+export interface TodoEntry extends BaseDocument {
+  title: string;
+  date: string; // yyyy-MM-dd
+  items: TodoItem[];
+}
+
 // ─── Notes ─────────────────────────────────────────────────────────────────
 export interface NoteEntry extends BaseDocument {
   date: string;
@@ -149,6 +162,21 @@ export interface PeriodSettings extends BaseDocument {
   averageCycleLength: number;  // days, default 28
   averageBleedingDays: number; // days, default 5
   lastPeriodStart?: string;
+}
+
+// ─── Habits ────────────────────────────────────────────────────────────────
+export interface HabitDefinition extends BaseDocument {
+  name: string;
+  icon?: string;
+  color?: string;
+  active: boolean;
+  order?: number;
+}
+
+export interface HabitLog extends BaseDocument {
+  date: string; // yyyy-MM-dd
+  habitId: string;
+  done: boolean;
 }
 
 // ─── Settings ──────────────────────────────────────────────────────────────

@@ -22,4 +22,7 @@ export const db = {
   notes: createStore('notes'),
   period: createStore('period'),
   readingLog: createStore('reading_log'),
+  todos: createStore('todos'),
+  habits: createStore('habits'),
+  habitLogs: createStore('habit_logs'),
 };

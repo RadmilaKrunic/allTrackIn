@@ -18,13 +18,15 @@ type MenuItem = NavItem | DividerItem;
 const allNavItems: MenuItem[] = [
   { to: '/', label: 'Dashboard', icon: '🏠', exact: true },
   { divider: true },
-  { to: '/spending', label: 'Spending',        icon: '💰', color: MODULE_COLORS.spending.primary, moduleKey: 'spending' },
-  { to: '/training', label: 'Training',        icon: '🏃', color: MODULE_COLORS.training.primary, moduleKey: 'training' },
-  { to: '/books',    label: 'Books',           icon: '📚', color: MODULE_COLORS.books.primary,    moduleKey: 'books'    },
   { to: '/events',   label: 'Events & Notes',  icon: '🗓', color: MODULE_COLORS.events.primary,   moduleKey: 'events'   },
+  { to: '/todo',     label: 'To-Do',           icon: '✅', color: MODULE_COLORS.todo.primary,     moduleKey: 'todo'     },
   { to: '/work',     label: 'Work',            icon: '💼', color: MODULE_COLORS.work.primary,     moduleKey: 'work'     },
   { to: '/eating',   label: 'Eating',          icon: '🥗', color: MODULE_COLORS.eating.primary,   moduleKey: 'eating'   },
+  { to: '/training', label: 'Training',        icon: '🏃', color: MODULE_COLORS.training.primary, moduleKey: 'training' },
+  { to: '/spending', label: 'Spending',        icon: '💰', color: MODULE_COLORS.spending.primary, moduleKey: 'spending' },
   { to: '/period',   label: 'Period',          icon: '🌸', color: MODULE_COLORS.period.primary,   moduleKey: 'period'   },
+  { to: '/books',    label: 'Reading',         icon: '📚', color: MODULE_COLORS.books.primary,    moduleKey: 'books'    },
+  { to: '/habits',   label: 'Habits',          icon: '🎯', color: MODULE_COLORS.habits.primary,   moduleKey: 'habits'   },
   { divider: true },
   { to: '/settings', label: 'Settings', icon: '⚙️' },
 ];
