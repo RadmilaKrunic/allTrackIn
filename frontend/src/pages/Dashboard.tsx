@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { useNavigate, type NavigateFunction } from 'react-router-dom';
-import { dashboardApi, notesApi } from '../api/client';
+import { dashboardApi, notesApi, todoApi, habitsApi } from '../api/client';
 import CalendarView from '../components/calendar/CalendarView';
 import { MODULE_COLORS } from '../themes/themes';
 import { useApp } from '../contexts/AppContext';
-import type { DashboardData, EventEntry, TrainingEntry, NoteEntry } from '../types';
+import type { DashboardData, EventEntry, TrainingEntry, NoteEntry, TodoEntry, HabitDefinition, HabitLog } from '../types';
 
 // ─── Quick Stats Card ────────────────────────────────────────────────────────
 function QuickStatCard({ icon, label, value, color }: { icon: string; label: string; value: string | number; color: string }) {
@@ -383,6 +383,87 @@ function AddNoteModal({ date, onClose }: { date: string; onClose: () => void }) 
   );
 }
 
+// ─── Today's To-Do ────────────────────────────────────────────────────────────
+function TodayTodos({ todos }: { todos: TodoEntry[] }) {
+  const navigate = useNavigate();
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayLists = todos.filter(t => t.date === todayStr);
+
+  if (!todayLists.length) return (
+    <div className="empty-state" style={{ padding: '1.25rem' }}>
+      <span style={{ fontSize: '1.75rem' }}>✅</span>
+      <p style={{ fontSize: '0.85rem' }}>No to-do lists for today</p>
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {todayLists.map(list => {
+        const total = list.items.length;
+        const done = list.items.filter(i => i.done).length;
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+        const allDone = total > 0 && done === total;
+        return (
+          <div key={list._id} style={{ padding: '0.75rem 0.875rem', borderRadius: 'var(--radius-md)', background: allDone ? MODULE_COLORS.todo.soft : 'var(--color-surface)', border: `1px solid ${allDone ? MODULE_COLORS.todo.primary + '40' : 'var(--color-border)'}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: total > 0 ? '0.5rem' : 0 }}>
+              <span style={{ fontWeight: 600, fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{list.title}</span>
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: allDone ? MODULE_COLORS.todo.text : 'var(--color-text-muted)', marginLeft: '0.5rem', flexShrink: 0 }}>{done}/{total}</span>
+            </div>
+            {total > 0 && (
+              <div style={{ height: '4px', borderRadius: '2px', background: 'var(--color-border)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: allDone ? MODULE_COLORS.todo.primary : MODULE_COLORS.todo.primary + 'aa', borderRadius: '2px', transition: 'width 0.3s' }} />
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/todo')} style={{ alignSelf: 'center', marginTop: '0.125rem' }}>Open To-Do →</button>
+    </div>
+  );
+}
+
+// ─── Today's Habits ───────────────────────────────────────────────────────────
+function TodayHabits({ habits, logs }: { habits: HabitDefinition[]; logs: HabitLog[] }) {
+  const navigate = useNavigate();
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const active = habits.filter(h => h.active);
+  const todayLogs = logs.filter(l => l.date === todayStr);
+
+  if (!active.length) return (
+    <div className="empty-state" style={{ padding: '1.25rem' }}>
+      <span style={{ fontSize: '1.75rem' }}>🎯</span>
+      <p style={{ fontSize: '0.85rem' }}>No habits configured yet</p>
+    </div>
+  );
+
+  const doneCount = active.filter(h => todayLogs.some(l => l.habitId === h._id && l.done)).length;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{doneCount}/{active.length} done today</span>
+        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: MODULE_COLORS.habits.text }}>{active.length > 0 ? Math.round((doneCount / active.length) * 100) : 0}%</span>
+      </div>
+      <div style={{ height: '4px', borderRadius: '2px', background: 'var(--color-border)', overflow: 'hidden', marginBottom: '0.375rem' }}>
+        <div style={{ height: '100%', width: `${active.length > 0 ? Math.round((doneCount / active.length) * 100) : 0}%`, background: MODULE_COLORS.habits.primary, borderRadius: '2px', transition: 'width 0.3s' }} />
+      </div>
+      {active.map(habit => {
+        const log = todayLogs.find(l => l.habitId === habit._id);
+        const done = log?.done ?? false;
+        const color = habit.color ?? MODULE_COLORS.habits.primary;
+        return (
+          <div key={habit._id} style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', background: done ? color + '15' : 'var(--color-surface)', border: `1px solid ${done ? color + '40' : 'var(--color-border)'}` }}>
+            <span style={{ fontSize: '1rem', width: '1.25rem', textAlign: 'center' }}>{habit.icon || '🎯'}</span>
+            <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 500, color: done ? 'var(--color-text)' : 'var(--color-text-secondary)' }}>{habit.name}</span>
+            <span style={{ fontSize: '0.8rem' }}>{done ? '✅' : '⬜'}</span>
+          </div>
+        );
+      })}
+      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/habits')} style={{ alignSelf: 'center', marginTop: '0.125rem' }}>Open Habits →</button>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [flyoutDay, setFlyoutDay] = useState<{ day: Date; items: Array<Record<string, unknown>> } | null>(null);
@@ -394,7 +475,24 @@ export default function Dashboard() {
     refetchInterval: 5 * 60 * 1000,
   });
 
-  const todayStr = format(new Date(), 'EEEE, MMMM d, yyyy');
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+  const { data: todayTodos = [] } = useQuery<TodoEntry[]>({
+    queryKey: ['todos', todayStr],
+    queryFn: () => todoApi.getAll({ date: todayStr }) as Promise<TodoEntry[]>,
+  });
+
+  const { data: habitsData = [] } = useQuery<HabitDefinition[]>({
+    queryKey: ['habits'],
+    queryFn: () => habitsApi.getAll() as Promise<HabitDefinition[]>,
+  });
+
+  const { data: habitLogs = [] } = useQuery<HabitLog[]>({
+    queryKey: ['habitLogs', todayStr],
+    queryFn: () => habitsApi.getLogs({ startDate: todayStr, endDate: todayStr }) as Promise<HabitLog[]>,
+  });
+
+  const todayStr2 = format(new Date(), 'EEEE, MMMM d, yyyy');
 
   function handleDayClick(day: Date, items: Array<Record<string, unknown>>) {
     setFlyoutDay({ day, items });
@@ -416,7 +514,7 @@ export default function Dashboard() {
         <h1 style={{ fontSize: 'clamp(1.35rem, 4vw, 1.75rem)', fontWeight: 700, margin: 0 }}>
           Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'} ✨
         </h1>
-        <p style={{ color: 'var(--color-text-secondary)', margin: '0.25rem 0 0', fontSize: '0.9rem' }}>{todayStr}</p>
+        <p style={{ color: 'var(--color-text-secondary)', margin: '0.25rem 0 0', fontSize: '0.9rem' }}>{todayStr2}</p>
       </div>
 
       {data?.dailyQuote && <QuoteCard quote={data.dailyQuote} />}
@@ -436,11 +534,23 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div className="card">
             <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.95rem' }}>🗓 Upcoming</h3></div>
             <div className="card-body" style={{ paddingTop: '0.75rem' }}>
               {data && <UpcomingEvents events={data.upcomingEvents} />}
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.95rem' }}>✅ Today's To-Do</h3></div>
+            <div className="card-body" style={{ paddingTop: '0.75rem' }}>
+              <TodayTodos todos={todayTodos} />
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.95rem' }}>🎯 Today's Habits</h3></div>
+            <div className="card-body" style={{ paddingTop: '0.75rem' }}>
+              <TodayHabits habits={habitsData} logs={habitLogs} />
             </div>
           </div>
         </div>
