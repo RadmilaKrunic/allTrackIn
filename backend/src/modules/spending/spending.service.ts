@@ -7,24 +7,24 @@ class SpendingService extends BaseService<SpendingEntry> {
     super(db.spending);
   }
 
-  async getByDateRange(startDate: string, endDate: string): Promise<SpendingEntry[]> {
-    return this.findAll(
-      { date: { $gte: startDate, $lte: endDate } },
-      { sort: { date: -1 } }
-    );
+  async getByDateRange(startDate: string, endDate: string, userId?: string): Promise<SpendingEntry[]> {
+    const query: Record<string, unknown> = { date: { $gte: startDate, $lte: endDate } };
+    if (userId) query.userId = userId;
+    return this.findAll(query, { sort: { date: -1 } });
   }
 
-  async getByMonth(year: number, month: number): Promise<SpendingEntry[]> {
+  async getByMonth(year: number, month: number, userId?: string): Promise<SpendingEntry[]> {
     const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
     const end = new Date(year, month, 0).toISOString().split('T')[0];
-    return this.getByDateRange(start, end);
+    return this.getByDateRange(start, end, userId);
   }
 
   async getSummaryByCategory(
     startDate: string,
-    endDate: string
+    endDate: string,
+    userId?: string
   ): Promise<Record<string, { total: number; count: number; items: SpendingEntry[] }>> {
-    const items = await this.getByDateRange(startDate, endDate);
+    const items = await this.getByDateRange(startDate, endDate, userId);
     return items.reduce<Record<string, { total: number; count: number; items: SpendingEntry[] }>>(
       (acc, item) => {
         const key = item.category || 'uncategorized';

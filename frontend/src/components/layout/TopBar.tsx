@@ -1,6 +1,7 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../../contexts/AppContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/':         'Dashboard',
@@ -16,7 +17,9 @@ const ROUTE_TITLES: Record<string, string> = {
 export default function TopBar() {
   const { setSidebarOpen } = useApp();
   const { currentTheme, setCurrentTheme, themes } = useTheme();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const title = ROUTE_TITLES[location.pathname] ?? 'AllTrackIn';
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -53,6 +56,30 @@ export default function TopBar() {
           <option key={key} value={key}>{theme.name}</option>
         ))}
       </select>
+
+      {user && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div
+            title={`${user.name} (${user.email})`}
+            style={{
+              width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0,
+              background: 'var(--color-primary)', color: 'white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.9rem', fontWeight: 700, cursor: 'default', userSelect: 'none',
+            }}
+          >
+            {user.name.charAt(0).toUpperCase()}
+          </div>
+          <button
+            className="btn btn-ghost btn-sm topbar-logout"
+            onClick={() => { logout(); navigate('/login', { replace: true }); }}
+            title="Sign out"
+            style={{ fontSize: '0.8rem' }}
+          >
+            🚪
+          </button>
+        </div>
+      )}
 
       <style>{`
         .mobile-menu-btn { display: none; }

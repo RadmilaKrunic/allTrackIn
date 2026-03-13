@@ -8,16 +8,12 @@ const router = Router();
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const uid = req.user!.id;
     const { startDate, endDate, activityType } = req.query as Record<string, string>;
-    let items: TrainingEntry[];
-    if (startDate && endDate) {
-      items = await service.findAll({ date: { $gte: startDate, $lte: endDate } }, { sort: { date: -1 } });
-    } else if (activityType) {
-      items = await service.findAll({ activityType }, { sort: { date: -1 } });
-    } else {
-      items = await service.findAll({}, { sort: { date: -1 } });
-    }
-    res.json(items);
+    const query: Record<string, unknown> = { userId: uid };
+    if (startDate && endDate) query.date = { $gte: startDate, $lte: endDate };
+    if (activityType) query.activityType = activityType;
+    res.json(await service.findAll(query, { sort: { date: -1 } }));
   } catch (err) { next(err); }
 });
 
@@ -31,7 +27,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const item = await service.create(req.body);
+    const item = await service.create({ ...req.body, userId: req.user!.id });
     res.status(201).json(item);
   } catch (err) { next(err); }
 });

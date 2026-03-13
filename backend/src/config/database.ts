@@ -11,6 +11,7 @@ const createStore = (filename: string): Datastore<any> =>
   });
 
 export const db = {
+  users: createStore('users'),
   spending: createStore('spending'),
   training: createStore('training'),
   books: createStore('books'),

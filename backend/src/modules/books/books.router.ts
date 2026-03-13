@@ -15,7 +15,7 @@ const router = Router();
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { status, listType } = req.query as Record<string, string>;
-    const query: Record<string, unknown> = {};
+    const query: Record<string, unknown> = { userId: req.user!.id };
     if (status) query.status = status;
     if (listType) query.listType = listType;
     res.json(await service.findAll(query, { sort: { updatedAt: -1 } }));
@@ -24,9 +24,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
 // ─── Reading Log ─────────────────────────────────────────────────────────────
 
-router.get('/reading-log', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/reading-log', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    res.json(await logService.findAll({}, { sort: { date: -1 } }));
+    res.json(await logService.findAll({ userId: req.user!.id }, { sort: { date: -1 } }));
   } catch (err) { next(err); }
 });
 
@@ -34,26 +34,27 @@ router.put('/reading-log/:date', async (req: Request, res: Response, next: NextF
   try {
     const { date } = req.params;
     const { read } = req.body;
-    const existing = await logService.findAll({ date });
+    const uid = req.user!.id;
+    const existing = await logService.findAll({ userId: uid, date });
     if (existing.length > 0) {
       res.json(await logService.update(existing[0]._id!, { read }));
     } else {
-      res.status(201).json(await logService.create({ date, read }));
+      res.status(201).json(await logService.create({ userId: uid, date, read }));
     }
   } catch (err) { next(err); }
 });
 
 // ─── Book CRUD ───────────────────────────────────────────────────────────────
 
-router.get('/wishlist', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/wishlist', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    res.json(await service.findAll({ status: 'wishlist' }));
+    res.json(await service.findAll({ userId: req.user!.id, status: 'wishlist' }));
   } catch (err) { next(err); }
 });
 
-router.get('/borrowed', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/borrowed', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    res.json(await service.findAll({ borrowType: { $exists: true } }));
+    res.json(await service.findAll({ userId: req.user!.id, borrowType: { $exists: true } }));
   } catch (err) { next(err); }
 });
 
@@ -67,7 +68,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    res.status(201).json(await service.create(req.body));
+    res.status(201).json(await service.create({ ...req.body, userId: req.user!.id }));
   } catch (err) { next(err); }
 });
 

@@ -5,6 +5,13 @@ export interface BaseDocument {
   updatedAt?: Date;
 }
 
+// ─── User ──────────────────────────────────────────────────────────────────
+export interface User extends BaseDocument {
+  email: string;
+  name: string;
+  passwordHash: string;
+}
+
 // ─── Spending ──────────────────────────────────────────────────────────────
 export type TransactionType = 'expense' | 'income' | 'saving';
 export type SpendingEntryType = 'transaction' | 'fixed' | 'product' | 'cart';

@@ -9,17 +9,18 @@ const settingsService = new BaseService<PeriodSettings>(db.period);
 const router = Router();
 
 // ─── Period Settings ────────────────────────────────────────────────────────
-router.get('/settings', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/settings', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const s = await settingsService.findOne({ type: 'period_settings' });
+    const s = await settingsService.findOne({ type: 'period_settings', userId: req.user!.id });
     res.json(s ?? { type: 'period_settings', averageCycleLength: 28, averageBleedingDays: 5 });
   } catch (err) { next(err); }
 });
 
 router.put('/settings', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const existing = await settingsService.findOne({ type: 'period_settings' });
-    const data = { ...req.body, type: 'period_settings' };
+    const uid = req.user!.id;
+    const existing = await settingsService.findOne({ type: 'period_settings', userId: uid });
+    const data = { ...req.body, type: 'period_settings', userId: uid };
     const result = existing
       ? await settingsService.update(existing._id!, data)
       : await settingsService.create(data);
@@ -28,15 +29,16 @@ router.put('/settings', async (req: Request, res: Response, next: NextFunction) 
 });
 
 // ─── Period Predictions ──────────────────────────────────────────────────────
-router.get('/predictions', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/predictions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const settings = await settingsService.findOne({ type: 'period_settings' }) as PeriodSettings | null;
+    const uid = req.user!.id;
+    const settings = await settingsService.findOne({ type: 'period_settings', userId: uid }) as PeriodSettings | null;
     const cycleLength = settings?.averageCycleLength ?? 28;
     const bleedingDays = settings?.averageBleedingDays ?? 5;
 
     // Get last 6 actual cycles to compute average
     const entries = await entryService.findAll(
-      { startDate: { $exists: true }, type: { $exists: false } },
+      { userId: uid, startDate: { $exists: true }, type: { $exists: false } },
       { sort: { startDate: -1 }, limit: 6 }
     );
 
@@ -87,7 +89,7 @@ router.get('/predictions', async (_req: Request, res: Response, next: NextFuncti
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { year } = req.query as Record<string, string>;
-    const query: Record<string, unknown> = { type: { $exists: false } };
+    const query: Record<string, unknown> = { userId: req.user!.id, type: { $exists: false } };
     if (year) {
       query.startDate = {
         $gte: `${year}-01-01`,
@@ -109,7 +111,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.body.startDate) return res.status(400).json({ message: 'startDate is required' });
-    res.status(201).json(await entryService.create(req.body));
+    res.status(201).json(await entryService.create({ ...req.body, userId: req.user!.id }));
   } catch (err) { next(err); }
 });
 

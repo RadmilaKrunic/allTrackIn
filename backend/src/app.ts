@@ -15,6 +15,8 @@ import notesRouter from './modules/notes/notes.router';
 import periodRouter from './modules/period/period.router';
 import todoRouter from './modules/todo/todo.router';
 import habitsRouter from './modules/habits/habits.router';
+import authRouter from './modules/auth/auth.router';
+import { requireAuth } from './middleware/auth.middleware';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import { db } from './config/database';
 import { BaseService } from './shared/base.service';
@@ -30,21 +32,28 @@ app.use(cors({ origin: process.env.FRONTEND_URL ?? '*' }));
 app.use(morgan('dev'));
 app.use(express.json());
 
+// ─── Auth routes (public) ────────────────────────────────────────────────────
+app.use('/api/auth', authRouter);
+
+// ─── All routes below require authentication ─────────────────────────────────
+app.use('/api', requireAuth);
+
 // ─── Dashboard aggregation ──────────────────────────────────────────────────
-app.get('/api/dashboard', async (_req, res, next) => {
+app.get('/api/dashboard', async (req, res, next) => {
   try {
+    const uid = req.user!.id;
     const today = new Date().toISOString().split('T')[0];
     const twoWeeksAhead = new Date(Date.now() + 14 * 86_400_000).toISOString().split('T')[0];
 
     const [events, trainings, workLogs, eatingLogs, allQuotes] = await Promise.all([
       new BaseService<EventEntry>(db.events).findAll(
-        { date: { $gte: today, $lte: twoWeeksAhead } },
+        { userId: uid, date: { $gte: today, $lte: twoWeeksAhead } },
         { sort: { date: 1 }, limit: 10 }
       ),
-      new BaseService<TrainingEntry>(db.training).findAll({ date: today }),
-      new BaseService<WorkEntry>(db.work).findAll({ date: today }),
-      new BaseService<EatingEntry>(db.eating).findAll({ date: today }),
-      new BaseService<Quote>(db.quotes).findAll({ active: { $ne: false } }),
+      new BaseService<TrainingEntry>(db.training).findAll({ userId: uid, date: today }),
+      new BaseService<WorkEntry>(db.work).findAll({ userId: uid, date: today }),
+      new BaseService<EatingEntry>(db.eating).findAll({ userId: uid, date: today }),
+      new BaseService<Quote>(db.quotes).findAll({ userId: uid, active: { $ne: false } }),
     ]);
 
     const dailyQuote = allQuotes.length
@@ -65,10 +74,11 @@ app.get('/api/dashboard', async (_req, res, next) => {
 // ─── Calendar aggregation ───────────────────────────────────────────────────
 app.get('/api/calendar', async (req, res, next) => {
   try {
+    const uid = req.user!.id;
     const { year, month } = req.query as Record<string, string>;
     const start = new Date(+year, +month - 1, 1).toISOString().split('T')[0];
     const end = new Date(+year, +month, 0).toISOString().split('T')[0];
-    const dateQ = { date: { $gte: start, $lte: end } };
+    const dateQ = { userId: uid, date: { $gte: start, $lte: end } };
 
     const [spending, training, events, work, eating, notes] = await Promise.all([
       new BaseService<SpendingEntry>(db.spending).findAll(dateQ),
@@ -79,9 +89,8 @@ app.get('/api/calendar', async (req, res, next) => {
       new BaseService<NoteEntry>(db.notes).findAll(dateQ),
     ]);
 
-    // Period entries: include if startDate falls in range
     const period = await new BaseService<PeriodEntry>(db.period).findAll(
-      { startDate: { $gte: start, $lte: end }, type: { $exists: false } }
+      { userId: uid, startDate: { $gte: start, $lte: end }, type: { $exists: false } }
     );
 
     res.json({
