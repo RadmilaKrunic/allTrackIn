@@ -319,6 +319,26 @@ export default function EatingPage() {
     return map;
   }, [dietEntries]);
 
+  // Eating streak — consecutive days with any diet or meal log
+  const eatingStreak = useMemo(() => {
+    const loggedDates = new Set([
+      ...dietEntries.map(e => e.date ?? ''),
+      ...mealEntries.map(e => e.date ?? ''),
+    ]);
+    loggedDates.delete('');
+    const todayStr = getTodayStr();
+    let streak = 0;
+    const d = new Date();
+    if (!loggedDates.has(todayStr)) d.setDate(d.getDate() - 1);
+    while (true) {
+      const ds = format(d, 'yyyy-MM-dd');
+      if (!loggedDates.has(ds)) break;
+      streak++;
+      d.setDate(d.getDate() - 1);
+    }
+    return streak;
+  }, [dietEntries, mealEntries]);
+
   // Sorted meal entries
   const sortedMeals = [...mealEntries].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
 
@@ -343,6 +363,7 @@ export default function EatingPage() {
             <h1 style={{ margin: 0, color: COLOR.primary, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)' }}>Eating & Nutrition</h1>
             <p style={{ margin: '0.25rem 0 0', color: COLOR.text, fontSize: '0.875rem' }}>
               {totalDietDays} diet days this month · {mealEntries.length} meal logs · {recipes.length} recipes
+              {eatingStreak > 0 && <span style={{ marginLeft: '0.5rem' }}>· 🔥 {eatingStreak}-day streak</span>}
             </p>
           </div>
         </div>
@@ -388,10 +409,15 @@ export default function EatingPage() {
                     <button className="btn btn-icon btn-ghost btn-sm" onClick={() => setStatsMonth(m => addMonths(m, 1))}>›</button>
                   </div>
                 </div>
-                <div style={{ marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                   <span className="badge" style={{ background: COLOR.soft, color: COLOR.text, border: `1px solid ${COLOR.primary}40` }}>
                     {totalDietDays} / {daysInMonth} days logged
                   </span>
+                  {eatingStreak > 0 && (
+                    <span className="badge" style={{ background: '#FEF9C3', color: '#A16207', border: '1px solid #FDE047' }}>
+                      🔥 {eatingStreak}-day streak
+                    </span>
+                  )}
                 </div>
                 {catCounts.map(cat => (
                   <div key={cat.key} style={{ marginBottom: '0.4rem' }}>

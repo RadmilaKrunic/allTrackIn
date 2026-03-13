@@ -317,6 +317,19 @@ export default function TrainingPage() {
     return map;
   }, [allEntries]);
 
+  const trainingStreak = useMemo(() => {
+    let streak = 0;
+    const d = new Date();
+    if (!entryByDate.has(todayS)) d.setDate(d.getDate() - 1);
+    while (true) {
+      const ds = format(d, 'yyyy-MM-dd');
+      if (!entryByDate.has(ds)) break;
+      streak++;
+      d.setDate(d.getDate() - 1);
+    }
+    return streak;
+  }, [entryByDate, todayS]);
+
   const weekDates = useMemo(() => {
     const monday = startOfWeek(weekRef, { weekStartsOn: 1 });
     return Array.from({ length: 7 }, (_, i) => addDays(monday, i));
@@ -361,6 +374,7 @@ export default function TrainingPage() {
                 monthStats.totalMins >= 60
                   ? `${Math.floor(monthStats.totalMins / 60)}h ${monthStats.totalMins % 60}m`
                   : `${monthStats.totalMins}m`} this month
+              {trainingStreak > 0 && <span style={{ marginLeft: '0.5rem' }}>· 🔥 {trainingStreak}-day streak</span>}
             </p>
           </div>
         </div>
@@ -392,6 +406,12 @@ export default function TrainingPage() {
                 </span>
                 <span style={{ fontSize: '0.72rem', color: C.text, marginLeft: '0.3rem' }}>active</span>
               </div>
+              {trainingStreak > 0 && (
+                <div style={{ padding: '0.35rem 0.65rem', borderRadius: 'var(--radius-sm)', background: '#FEF9C3', border: '1px solid #FDE047' }}>
+                  <span style={{ fontWeight: 700, fontSize: '1rem', color: '#A16207' }}>🔥 {trainingStreak}</span>
+                  <span style={{ fontSize: '0.72rem', color: '#A16207', marginLeft: '0.3rem' }}>day streak</span>
+                </div>
+              )}
             </div>
             {(Object.entries(monthStats.counts) as [ActivityType, number][]).sort((a, b) => b[1] - a[1]).map(([type, count]) => {
               const meta = activityMeta(type);
