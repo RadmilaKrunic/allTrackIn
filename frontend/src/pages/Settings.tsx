@@ -5,11 +5,14 @@ import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
-import type { Category, Quote } from '../types';
+import { PeriodSettingsSection } from '../modules/period/PeriodPage';
+import { MODULE_COLORS } from '../themes/themes';
+import type { Category, Quote, ModuleKey } from '../types';
 
+const ALL_MODULES: ModuleKey[] = ['spending', 'training', 'books', 'events', 'work', 'eating', 'period'];
 const MODULES = ['spending', 'training', 'books', 'events', 'work', 'eating'];
 const MODULE_ICONS: Record<string, string> = {
-  spending: '💰', training: '🏃', books: '📚', events: '🗓', work: '💼', eating: '🥗',
+  spending: '💰', training: '🏃', books: '📚', events: '🗓', work: '💼', eating: '🥗', period: '🌸',
 };
 
 // ─── Categories Section ──────────────────────────────────────────────────────
@@ -337,6 +340,78 @@ function ThemeSection() {
   );
 }
 
+// ─── Module Toggles Section ───────────────────────────────────────────────────
+function ModuleTogglesSection() {
+  const { notify } = useApp();
+  const qc = useQueryClient();
+
+  const { data: prefs } = useQuery({
+    queryKey: ['settings', 'preferences'],
+    queryFn: settingsApi.getPreferences,
+  });
+
+  const updateMut = useMutation({
+    mutationFn: settingsApi.updatePreferences,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['settings', 'preferences'] }); notify('Module visibility saved', 'success'); },
+    onError: (err: Error) => notify(err.message, 'error'),
+  });
+
+  const MODULE_LABELS: Record<string, string> = {
+    spending: 'Spending', training: 'Training', books: 'Books',
+    events: 'Events & Notes', work: 'Work', eating: 'Eating', period: 'Period Tracker',
+  };
+
+  const enabled: ModuleKey[] = prefs?.enabledModules ?? ALL_MODULES;
+
+  function toggle(mod: ModuleKey) {
+    const next = enabled.includes(mod)
+      ? enabled.filter(m => m !== mod)
+      : [...enabled, mod];
+    updateMut.mutate({ enabledModules: next });
+  }
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h3 style={{ margin: 0, fontSize: '1rem' }}>🔲 Modules</h3>
+      </div>
+      <div className="card-body">
+        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+          Choose which modules appear in the navigation. Disabled modules are hidden but data is preserved.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {ALL_MODULES.map(mod => {
+            const isOn = enabled.includes(mod);
+            const color = MODULE_COLORS[mod]?.primary ?? 'var(--color-primary)';
+            return (
+              <div key={mod} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', background: isOn ? MODULE_COLORS[mod]?.soft ?? 'var(--color-surface)' : 'var(--color-bg-secondary)', border: `1px solid ${isOn ? color + '40' : 'var(--color-border)'}`, opacity: isOn ? 1 : 0.6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '1.25rem' }}>{MODULE_ICONS[mod]}</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem', color: isOn ? color : 'var(--color-text-muted)' }}>{MODULE_LABELS[mod]}</span>
+                </div>
+                <button
+                  onClick={() => toggle(mod)}
+                  style={{
+                    width: '44px', height: '24px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                    background: isOn ? color : 'var(--color-border)',
+                    position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                  }}
+                >
+                  <span style={{
+                    position: 'absolute', top: '3px', left: isOn ? '23px' : '3px',
+                    width: '18px', height: '18px', borderRadius: '50%', background: 'white',
+                    transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  }} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Settings Page ────────────────────────────────────────────────────────────
 export default function Settings() {
   return (
@@ -348,6 +423,8 @@ export default function Settings() {
         </p>
       </div>
       <ThemeSection />
+      <ModuleTogglesSection />
+      <PeriodSettingsSection />
       <QuotesSection />
       <CategoriesSection />
     </div>

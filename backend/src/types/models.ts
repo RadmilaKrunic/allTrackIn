@@ -127,6 +127,30 @@ export interface EatingEntry extends BaseDocument {
   tags?: string[];
 }
 
+// ─── Notes ─────────────────────────────────────────────────────────────────
+export interface NoteEntry extends BaseDocument {
+  date: string;
+  title?: string;
+  text: string;
+}
+
+// ─── Period ────────────────────────────────────────────────────────────────
+export interface PeriodEntry extends BaseDocument {
+  startDate: string;
+  endDate?: string;
+  bleedingDays?: number;
+  symptoms?: string[];
+  mood?: string;
+  notes?: string;
+}
+
+export interface PeriodSettings extends BaseDocument {
+  type: 'period_settings';
+  averageCycleLength: number;  // days, default 28
+  averageBleedingDays: number; // days, default 5
+  lastPeriodStart?: string;
+}
+
 // ─── Settings ──────────────────────────────────────────────────────────────
 export interface Category extends BaseDocument {
   type: 'category';
@@ -139,6 +163,7 @@ export interface Category extends BaseDocument {
 export interface Preferences extends BaseDocument {
   type: 'preferences';
   theme: string;
+  enabledModules?: string[];
 }
 
 export interface Quote extends BaseDocument {
@@ -163,4 +188,6 @@ export interface CalendarData {
   events: EventEntry[];
   work: WorkEntry[];
   eating: EatingEntry[];
+  notes: NoteEntry[];
+  period: PeriodEntry[];
 }

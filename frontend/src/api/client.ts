@@ -2,7 +2,8 @@ import axios from 'axios';
 import type {
   SpendingEntry, TrainingEntry, BookEntry, EventEntry,
   WorkEntry, EatingEntry, Category, Quote, Preferences,
-  DashboardData, CalendarData,
+  DashboardData, CalendarData, NoteEntry, PeriodEntry,
+  PeriodSettings, PeriodPredictions,
 } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -119,6 +120,22 @@ export const settingsApi = {
     http.put<Quote, Quote>(`/settings/quotes/${id}`, data),
   deleteQuote: (id: string) =>
     http.delete(`/settings/quotes/${id}`),
+};
+
+export const notesApi = {
+  ...crud<NoteEntry>('notes'),
+  getByDate: (date: string) =>
+    http.get<NoteEntry[], NoteEntry[]>('/notes', { params: { date } }),
+};
+
+export const periodApi = {
+  ...crud<PeriodEntry>('period'),
+  getSettings: () =>
+    http.get<PeriodSettings, PeriodSettings>('/period/settings'),
+  updateSettings: (data: Partial<PeriodSettings>) =>
+    http.put<PeriodSettings, PeriodSettings>('/period/settings', data),
+  getPredictions: () =>
+    http.get<PeriodPredictions, PeriodPredictions>('/period/predictions'),
 };
 
 export const dashboardApi = {

@@ -11,6 +11,7 @@ const BooksPage    = lazy(() => import('./modules/books/BooksPage'));
 const EventsPage   = lazy(() => import('./modules/events/EventsPage'));
 const WorkPage     = lazy(() => import('./modules/work/WorkPage'));
 const EatingPage   = lazy(() => import('./modules/eating/EatingPage'));
+const PeriodPage   = lazy(() => import('./modules/period/PeriodPage'));
 
 function PageLoader() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/events/*"   element={<Suspense fallback={<PageLoader />}><EventsPage /></Suspense>} />
           <Route path="/work/*"     element={<Suspense fallback={<PageLoader />}><WorkPage /></Suspense>} />
           <Route path="/eating/*"   element={<Suspense fallback={<PageLoader />}><EatingPage /></Suspense>} />
+          <Route path="/period/*"   element={<Suspense fallback={<PageLoader />}><PeriodPage /></Suspense>} />
           <Route path="/settings/*" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
         </Route>
       </Routes>
