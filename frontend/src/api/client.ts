@@ -4,6 +4,7 @@ import type {
   WorkEntry, EatingEntry, Category, Quote, Preferences,
   DashboardData, CalendarData, NoteEntry, PeriodEntry,
   PeriodSettings, PeriodPredictions, ReadingLogEntry, TodoEntry,
+  HabitDefinition, HabitLog,
 } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -126,6 +127,14 @@ export const settingsApi = {
 };
 
 export const todoApi = crud<TodoEntry>('todos');
+
+export const habitsApi = {
+  ...crud<HabitDefinition>('habits'),
+  getLogs: (params?: Record<string, unknown>) =>
+    http.get<HabitLog[], HabitLog[]>('/habits/log', { params }),
+  toggleLog: (date: string, habitId: string, done: boolean) =>
+    http.put<HabitLog, HabitLog>(`/habits/log/${date}/${habitId}`, { done }),
+};
 
 export const notesApi = {
   ...crud<NoteEntry>('notes'),

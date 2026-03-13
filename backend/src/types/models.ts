@@ -164,6 +164,21 @@ export interface PeriodSettings extends BaseDocument {
   lastPeriodStart?: string;
 }
 
+// ─── Habits ────────────────────────────────────────────────────────────────
+export interface HabitDefinition extends BaseDocument {
+  name: string;
+  icon?: string;
+  color?: string;
+  active: boolean;
+  order?: number;
+}
+
+export interface HabitLog extends BaseDocument {
+  date: string; // yyyy-MM-dd
+  habitId: string;
+  done: boolean;
+}
+
 // ─── Settings ──────────────────────────────────────────────────────────────
 export interface Category extends BaseDocument {
   type: 'category';

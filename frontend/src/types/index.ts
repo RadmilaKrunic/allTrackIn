@@ -40,7 +40,22 @@ export interface PeriodPredictions {
 }
 
 // Module preferences
-export type ModuleKey = 'events' | 'todo' | 'work' | 'eating' | 'training' | 'spending' | 'period' | 'books';
+export type ModuleKey = 'events' | 'todo' | 'work' | 'eating' | 'training' | 'spending' | 'period' | 'books' | 'habits';
+
+// Habits
+export interface HabitDefinition extends BaseEntity {
+  name: string;
+  icon?: string;
+  color?: string;
+  active: boolean;
+  order?: number;
+}
+
+export interface HabitLog extends BaseEntity {
+  date: string; // yyyy-MM-dd
+  habitId: string;
+  done: boolean;
+}
 
 // ToDo
 export interface TodoItem {

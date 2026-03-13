@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { settingsApi } from '../api/client';
+import { settingsApi, habitsApi } from '../api/client';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { PeriodSettingsSection } from '../modules/period/PeriodPage';
 import { MODULE_COLORS } from '../themes/themes';
-import type { Category, Quote, ModuleKey } from '../types';
+import type { Category, Quote, ModuleKey, HabitDefinition } from '../types';
 
-const ALL_MODULES: ModuleKey[] = ['events', 'todo', 'work', 'eating', 'training', 'spending', 'period', 'books'];
+const ALL_MODULES: ModuleKey[] = ['events', 'todo', 'work', 'eating', 'training', 'spending', 'period', 'books', 'habits'];
 const MODULES = ['events', 'work', 'eating', 'training', 'spending'];
 const MODULE_ICONS: Record<string, string> = {
-  events: '🗓', todo: '✅', work: '💼', eating: '🥗', training: '🏃', spending: '💰', period: '🌸', books: '📚',
+  events: '🗓', todo: '✅', work: '💼', eating: '🥗', training: '🏃', spending: '💰', period: '🌸', books: '📚', habits: '🎯',
 };
 
 // ─── Categories Section ──────────────────────────────────────────────────────
@@ -358,7 +358,7 @@ function ModuleTogglesSection() {
 
   const MODULE_LABELS: Record<string, string> = {
     events: 'Events & Notes', todo: 'To-Do Lists', work: 'Work', eating: 'Eating',
-    training: 'Training', spending: 'Spending', period: 'Period Tracker', books: 'Reading',
+    training: 'Training', spending: 'Spending', period: 'Period Tracker', books: 'Reading', habits: 'Habit Tracker',
   };
 
   const enabled: ModuleKey[] = prefs?.enabledModules ?? ALL_MODULES;
@@ -412,6 +412,202 @@ function ModuleTogglesSection() {
   );
 }
 
+// ─── Habits Section ───────────────────────────────────────────────────────────
+const HABIT_COLORS = ['#0EA5E9', '#6366F1', '#22C55E', '#F97316', '#EF4444', '#A855F7', '#EC4899', '#F59E0B'];
+
+function HabitsSection() {
+  const { notify } = useApp();
+  const qc = useQueryClient();
+  const [showAdd, setShowAdd] = useState(false);
+  const [editTarget, setEditTarget] = useState<HabitDefinition | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<HabitDefinition | null>(null);
+  const [form, setForm] = useState({ name: '', icon: '', color: HABIT_COLORS[0] });
+
+  const { data: habits = [] } = useQuery<HabitDefinition[]>({
+    queryKey: ['habits'],
+    queryFn: () => habitsApi.getAll(),
+  });
+
+  const createMut = useMutation({
+    mutationFn: (data: Partial<HabitDefinition>) => habitsApi.create({ active: true, ...data }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['habits'] });
+      notify('Habit added');
+      setShowAdd(false);
+      setForm({ name: '', icon: '', color: HABIT_COLORS[0] });
+    },
+    onError: (err: Error) => notify(err.message, 'error'),
+  });
+
+  const updateMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<HabitDefinition> }) => habitsApi.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['habits'] });
+      notify('Habit updated');
+      setEditTarget(null);
+    },
+    onError: (err: Error) => notify(err.message, 'error'),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => habitsApi.remove(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['habits'] });
+      notify('Habit deleted');
+    },
+    onError: (err: Error) => notify(err.message, 'error'),
+  });
+
+  const HabitForm = ({ value, onChange }: {
+    value: typeof form;
+    onChange: (v: typeof form) => void;
+  }) => (
+    <>
+      <div className="form-group">
+        <label className="form-label">Habit name *</label>
+        <input className="form-input" value={value.name} onChange={e => onChange({ ...value, name: e.target.value })} placeholder="e.g. Drink water, Exercise, Meditate..." />
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label className="form-label">Icon (emoji)</label>
+          <input className="form-input" value={value.icon} onChange={e => onChange({ ...value, icon: e.target.value })} placeholder="💧" />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Color</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.25rem' }}>
+            {HABIT_COLORS.map(c => (
+              <button
+                key={c}
+                onClick={() => onChange({ ...value, color: c })}
+                style={{
+                  width: '28px', height: '28px', borderRadius: '50%', background: c,
+                  border: value.color === c ? '3px solid var(--color-text)' : '2px solid transparent',
+                  cursor: 'pointer', transition: 'border 0.15s',
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h3 style={{ margin: 0, fontSize: '1rem' }}>🎯 Habit Tracker</h3>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}>+ Add Habit</button>
+      </div>
+      <div className="card-body">
+        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+          Define habits to track daily. Each habit shows a streak of consecutive days completed.
+        </p>
+
+        {habits.length === 0 ? (
+          <div className="empty-state" style={{ padding: '1.5rem' }}>
+            <span style={{ fontSize: '1.75rem' }}>🎯</span>
+            <p style={{ fontSize: '0.85rem' }}>No habits defined yet</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {habits.map(habit => {
+              const color = habit.color ?? HABIT_COLORS[0];
+              const isOn = habit.active !== false;
+              return (
+                <div key={habit._id} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.75rem',
+                  padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
+                  background: isOn ? color + '15' : 'var(--color-bg-secondary)',
+                  border: `1px solid ${isOn ? color + '40' : 'var(--color-border)'}`,
+                  opacity: isOn ? 1 : 0.6,
+                }}>
+                  {habit.icon && <span style={{ fontSize: '1.1rem' }}>{habit.icon}</span>}
+                  <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9rem', color: isOn ? color : 'var(--color-text-muted)' }}>
+                    {habit.name}
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <button
+                      className="btn btn-icon btn-ghost"
+                      style={{ fontSize: '0.85rem' }}
+                      onClick={() => {
+                        setEditTarget(habit);
+                        setForm({ name: habit.name, icon: habit.icon ?? '', color: habit.color ?? HABIT_COLORS[0] });
+                      }}
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      className="btn btn-icon btn-ghost"
+                      style={{ fontSize: '0.85rem' }}
+                      onClick={() => habit._id && updateMut.mutate({ id: habit._id, data: { active: !isOn } })}
+                      title={isOn ? 'Disable' : 'Enable'}
+                    >
+                      {isOn ? '👁' : '🚫'}
+                    </button>
+                    <button
+                      className="btn btn-icon btn-ghost"
+                      style={{ color: '#DC2626', fontSize: '0.75rem' }}
+                      onClick={() => setDeleteTarget(habit)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Add modal */}
+      <Modal
+        isOpen={showAdd}
+        onClose={() => setShowAdd(false)}
+        title="Add Habit"
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setShowAdd(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={() => createMut.mutate(form)} disabled={!form.name}>
+              Add Habit
+            </button>
+          </>
+        }
+      >
+        <HabitForm value={form} onChange={setForm} />
+      </Modal>
+
+      {/* Edit modal */}
+      <Modal
+        isOpen={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        title="Edit Habit"
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setEditTarget(null)}>Cancel</button>
+            <button
+              className="btn btn-primary"
+              disabled={!form.name}
+              onClick={() => editTarget?._id && updateMut.mutate({ id: editTarget._id, data: form })}
+            >
+              Save
+            </button>
+          </>
+        }
+      >
+        <HabitForm value={form} onChange={setForm} />
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget?._id && deleteMut.mutate(deleteTarget._id)}
+        title="Delete Habit"
+        message={`Delete "${deleteTarget?.name}"? This will also remove all log data for this habit.`}
+      />
+    </div>
+  );
+}
+
 // ─── Settings Page ────────────────────────────────────────────────────────────
 export default function Settings() {
   return (
@@ -425,6 +621,7 @@ export default function Settings() {
       <ThemeSection />
       <ModuleTogglesSection />
       <PeriodSettingsSection />
+      <HabitsSection />
       <QuotesSection />
       <CategoriesSection />
     </div>

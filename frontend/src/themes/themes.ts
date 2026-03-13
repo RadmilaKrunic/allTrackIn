@@ -184,6 +184,7 @@ export const MODULE_COLORS: Record<string, ModuleColor> = {
   todo:     { primary: '#6366F1', soft: '#EEF2FF', dark: '#4338CA', text: '#3730A3' },
   notes:    { primary: '#EAB308', soft: '#FEFCE8', dark: '#A16207', text: '#854D0E' },
   period:   { primary: '#E11D48', soft: '#FFF1F2', dark: '#9F1239', text: '#881337' },
+  habits:   { primary: '#0EA5E9', soft: '#F0F9FF', dark: '#0369A1', text: '#075985' },
 };
 
 export const DEFAULT_THEME = 'pastel';

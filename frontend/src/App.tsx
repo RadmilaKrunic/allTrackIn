@@ -13,6 +13,7 @@ const WorkPage     = lazy(() => import('./modules/work/WorkPage'));
 const EatingPage   = lazy(() => import('./modules/eating/EatingPage'));
 const PeriodPage   = lazy(() => import('./modules/period/PeriodPage'));
 const TodoPage     = lazy(() => import('./modules/todo/TodoPage'));
+const HabitsPage   = lazy(() => import('./modules/habits/HabitsPage'));
 
 function PageLoader() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/eating/*"   element={<Suspense fallback={<PageLoader />}><EatingPage /></Suspense>} />
           <Route path="/period/*"   element={<Suspense fallback={<PageLoader />}><PeriodPage /></Suspense>} />
           <Route path="/todo/*"     element={<Suspense fallback={<PageLoader />}><TodoPage /></Suspense>} />
+          <Route path="/habits/*"   element={<Suspense fallback={<PageLoader />}><HabitsPage /></Suspense>} />
           <Route path="/settings/*" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
         </Route>
       </Routes>

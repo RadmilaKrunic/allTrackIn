@@ -102,6 +102,7 @@ function ModuleGrid() {
     { to: '/spending', label: 'Spending', icon: '💰', color: MODULE_COLORS.spending.primary, soft: MODULE_COLORS.spending.soft },
     { to: '/period',   label: 'Period',   icon: '🌸', color: MODULE_COLORS.period.primary,   soft: MODULE_COLORS.period.soft },
     { to: '/books',    label: 'Reading',  icon: '📚', color: MODULE_COLORS.books.primary,    soft: MODULE_COLORS.books.soft },
+    { to: '/habits',   label: 'Habits',   icon: '🎯', color: MODULE_COLORS.habits.primary,   soft: MODULE_COLORS.habits.soft },
   ];
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>

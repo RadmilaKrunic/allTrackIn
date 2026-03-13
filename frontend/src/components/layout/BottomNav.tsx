@@ -15,6 +15,7 @@ const ALL_MORE = [
   { to: '/spending', label: 'Spending',  icon: '💰', color: MODULE_COLORS.spending.primary, moduleKey: 'spending' },
   { to: '/period',   label: 'Period',    icon: '🌸', color: MODULE_COLORS.period.primary,   moduleKey: 'period'   },
   { to: '/books',    label: 'Reading',   icon: '📚', color: MODULE_COLORS.books.primary,    moduleKey: 'books'    },
+  { to: '/habits',   label: 'Habits',    icon: '🎯', color: MODULE_COLORS.habits.primary,   moduleKey: 'habits'   },
   { to: '/settings', label: 'Settings',  icon: '⚙️'                                                               },
 ];
 
