@@ -11,7 +11,7 @@ const router = Router();
 router.get('/categories', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { module } = req.query as Record<string, string>;
-    const query: Record<string, unknown> = { type: 'category' };
+    const query: Record<string, unknown> = { type: 'category', userId: req.user!.id };
     if (module) query.module = module;
     res.json(await settingsService.findAll(query, { sort: { module: 1, name: 1 } }));
   } catch (err) { next(err); }
@@ -19,7 +19,7 @@ router.get('/categories', async (req: Request, res: Response, next: NextFunction
 
 router.post('/categories', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    res.status(201).json(await settingsService.create({ ...req.body, type: 'category' }));
+    res.status(201).json(await settingsService.create({ ...req.body, type: 'category', userId: req.user!.id }));
   } catch (err) { next(err); }
 });
 
@@ -37,33 +37,34 @@ router.delete('/categories/:id', async (req: Request, res: Response, next: NextF
 });
 
 // ─── Preferences ────────────────────────────────────────────────────────────
-router.get('/preferences', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/preferences', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const prefs = await settingsService.findOne({ type: 'preferences' });
+    const prefs = await settingsService.findOne({ type: 'preferences', userId: req.user!.id });
     res.json(prefs ?? { type: 'preferences', theme: 'pastel' });
   } catch (err) { next(err); }
 });
 
 router.put('/preferences', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const existing = await settingsService.findOne({ type: 'preferences' });
+    const uid = req.user!.id;
+    const existing = await settingsService.findOne({ type: 'preferences', userId: uid });
     const prefs = existing
       ? await settingsService.update(existing._id!, req.body)
-      : await settingsService.create({ ...req.body, type: 'preferences' });
+      : await settingsService.create({ ...req.body, type: 'preferences', userId: uid });
     res.json(prefs);
   } catch (err) { next(err); }
 });
 
 // ─── Quotes / Affirmations ──────────────────────────────────────────────────
-router.get('/quotes', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/quotes', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    res.json(await quotesService.findAll({}, { sort: { createdAt: -1 } }));
+    res.json(await quotesService.findAll({ userId: req.user!.id }, { sort: { createdAt: -1 } }));
   } catch (err) { next(err); }
 });
 
-router.get('/quotes/random', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/quotes/random', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const all = await quotesService.findAll({ active: { $ne: false } });
+    const all = await quotesService.findAll({ userId: req.user!.id, active: { $ne: false } });
     if (!all.length) return res.json(null);
     res.json(all[Math.floor(Math.random() * all.length)]);
   } catch (err) { next(err); }
@@ -71,7 +72,7 @@ router.get('/quotes/random', async (_req: Request, res: Response, next: NextFunc
 
 router.post('/quotes', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    res.status(201).json(await quotesService.create({ ...req.body, active: true }));
+    res.status(201).json(await quotesService.create({ ...req.body, active: true, userId: req.user!.id }));
   } catch (err) { next(err); }
 });
 

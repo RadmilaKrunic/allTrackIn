@@ -9,17 +9,45 @@ import type {
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
+const TOKEN_KEY = 'alltrack_token';
+
 const http = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Attach JWT to every request
+http.interceptors.request.use(config => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
 http.interceptors.response.use(
   (r) => r.data,
-  (err) => Promise.reject(new Error(
-    err.response?.data?.error?.message ?? err.message ?? 'An error occurred'
-  ))
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem('alltrack_user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(new Error(
+      err.response?.data?.error ?? err.response?.data?.message ?? err.message ?? 'An error occurred'
+    ));
+  }
 );
+
+// Auth API (uses plain axios, not the authenticated http instance)
+export const authApi = {
+  register: (data: { email: string; name: string; password: string }) =>
+    axios.post<{ token: string; user: { id: string; email: string; name: string } }>(
+      `${BASE_URL}/auth/register`, data
+    ).then(r => r.data),
+  login: (data: { email: string; password: string }) =>
+    axios.post<{ token: string; user: { id: string; email: string; name: string } }>(
+      `${BASE_URL}/auth/login`, data
+    ).then(r => r.data),
+};
 
 // ─── Generic CRUD factory ───────────────────────────────────────────────────
 const crud = <T>(resource: string) => ({

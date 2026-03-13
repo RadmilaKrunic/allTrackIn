@@ -9,15 +9,15 @@ const router = Router();
 
 // ─── Habit definitions ───────────────────────────────────────────────────────
 
-router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    res.json(await habitService.findAll({}, { sort: { order: 1, createdAt: 1 } }));
+    res.json(await habitService.findAll({ userId: req.user!.id }, { sort: { order: 1, createdAt: 1 } }));
   } catch (err) { next(err); }
 });
 
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    res.status(201).json(await habitService.create({ active: true, ...req.body }));
+    res.status(201).json(await habitService.create({ active: true, ...req.body, userId: req.user!.id }));
   } catch (err) { next(err); }
 });
 
@@ -40,7 +40,7 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
 router.get('/log', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { startDate, endDate, date } = req.query as Record<string, string>;
-    const query: Record<string, unknown> = {};
+    const query: Record<string, unknown> = { userId: req.user!.id };
     if (date) query.date = date;
     else if (startDate && endDate) query.date = { $gte: startDate, $lte: endDate };
     res.json(await logService.findAll(query, { sort: { date: -1 } }));
@@ -53,11 +53,12 @@ router.put('/log/:date/:habitId', async (req: Request, res: Response, next: Next
     const { date, habitId } = req.params;
     const { done } = req.body as { done: boolean };
 
-    const existing = await logService.findAll({ date, habitId });
+    const uid = req.user!.id;
+    const existing = await logService.findAll({ userId: uid, date, habitId });
     if (existing.length > 0) {
       res.json(await logService.update(existing[0]._id!, { done }));
     } else {
-      res.status(201).json(await logService.create({ date, habitId, done }));
+      res.status(201).json(await logService.create({ userId: uid, date, habitId, done }));
     }
   } catch (err) { next(err); }
 });

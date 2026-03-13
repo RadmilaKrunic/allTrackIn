@@ -9,7 +9,7 @@ const router = Router();
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { date, startDate, endDate } = req.query as Record<string, string>;
-    const query: Record<string, unknown> = {};
+    const query: Record<string, unknown> = { userId: req.user!.id };
     if (date) query.date = date;
     else if (startDate && endDate) query.date = { $gte: startDate, $lte: endDate };
     res.json(await service.findAll(query, { sort: { date: -1, createdAt: -1 } }));
@@ -28,7 +28,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.body.date) return res.status(400).json({ message: 'date is required' });
     if (!req.body.text?.trim()) return res.status(400).json({ message: 'text is required' });
-    res.status(201).json(await service.create(req.body));
+    res.status(201).json(await service.create({ ...req.body, userId: req.user!.id }));
   } catch (err) { next(err); }
 });
 

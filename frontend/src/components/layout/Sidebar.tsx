@@ -1,5 +1,6 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../../contexts/AppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { MODULE_COLORS } from '../../themes/themes';
 import { useEnabledModules } from '../../hooks/useEnabledModules';
 
@@ -33,8 +34,15 @@ const allNavItems: MenuItem[] = [
 
 export default function Sidebar() {
   const { sidebarOpen, setSidebarOpen } = useApp();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const enabledModules = useEnabledModules();
+
+  function handleLogout() {
+    logout();
+    navigate('/login', { replace: true });
+  }
 
   const navItems = allNavItems.filter(item => {
     if ('divider' in item) return true;
@@ -76,8 +84,30 @@ export default function Sidebar() {
           })}
         </nav>
 
-        <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid var(--color-border)', fontSize: '0.72rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
-          AllTrackIn v1.0
+        <div style={{ padding: '0.875rem 1.25rem', borderTop: '1px solid var(--color-border)' }}>
+          {user && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.625rem' }}>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+                background: 'var(--color-primary)', color: 'white',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.85rem', fontWeight: 700,
+              }}>
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
+              </div>
+            </div>
+          )}
+          <button
+            onClick={handleLogout}
+            className="btn btn-secondary btn-sm"
+            style={{ width: '100%', justifyContent: 'center', fontSize: '0.8rem' }}
+          >
+            🚪 Sign out
+          </button>
         </div>
       </aside>
 

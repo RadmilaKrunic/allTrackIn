@@ -9,16 +9,16 @@ const router = Router();
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { startDate, endDate } = req.query as Record<string, string>;
-    const query: Record<string, unknown> = {};
+    const query: Record<string, unknown> = { userId: req.user!.id };
     if (startDate && endDate) query.date = { $gte: startDate, $lte: endDate };
     res.json(await service.findAll(query, { sort: { date: 1 } }));
   } catch (err) { next(err); }
 });
 
-router.get('/upcoming', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/upcoming', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const today = new Date().toISOString().split('T')[0];
-    res.json(await service.findAll({ date: { $gte: today } }, { sort: { date: 1 }, limit: 20 }));
+    res.json(await service.findAll({ userId: req.user!.id, date: { $gte: today } }, { sort: { date: 1 }, limit: 20 }));
   } catch (err) { next(err); }
 });
 
@@ -32,7 +32,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    res.status(201).json(await service.create(req.body));
+    res.status(201).json(await service.create({ ...req.body, userId: req.user!.id }));
   } catch (err) { next(err); }
 });
 
