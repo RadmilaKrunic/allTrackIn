@@ -174,10 +174,10 @@ export default function WorkPage() {
     <div className="page-content">
       {/* Header */}
       <div style={{
-        background: `linear-gradient(135deg, ${C.primary} 0%, ${C.dark} 100%)`,
+        background: C.soft,
+        border: `1px solid ${C.primary}30`,
         borderRadius: 'var(--radius-xl)',
         padding: '1.5rem',
-        color: 'white',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -185,31 +185,34 @@ export default function WorkPage() {
         flexWrap: 'wrap',
         gap: '0.75rem',
       }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '1.35rem', color: 'white' }}>💼 Work Tracker</h2>
-          <p style={{ margin: '0.25rem 0 0', opacity: 0.85, fontSize: '0.875rem' }}>
-            {monthStats.counts.home} home · {monthStats.counts.office} office · {monthStats.counts.travel} travel this month
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ fontSize: '2.5rem' }}>💼</span>
+          <div>
+            <h1 style={{ margin: 0, color: C.primary, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)' }}>Work Tracker</h1>
+            <p style={{ margin: '0.25rem 0 0', color: C.text, fontSize: '0.875rem' }}>
+              {monthStats.counts.home} home · {monthStats.counts.office} office · {monthStats.counts.travel} travel this month
+            </p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
             className="btn btn-sm"
             onClick={() => openAdd({ locationType: 'home', status: 'done' })}
-            style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)' }}
+            style={{ background: C.primary + '20', color: C.primary, border: `1px solid ${C.primary}40` }}
           >
             🏠 Home Today
           </button>
           <button
             className="btn btn-sm"
             onClick={() => openAdd({ locationType: 'office', status: 'done' })}
-            style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)' }}
+            style={{ background: C.primary + '20', color: C.primary, border: `1px solid ${C.primary}40` }}
           >
             🏢 Office Today
           </button>
           <button
             className="btn"
             onClick={() => openAdd()}
-            style={{ background: 'white', color: C.dark, fontWeight: 600 }}
+            style={{ background: C.primary, color: 'white', fontWeight: 600 }}
           >
             + Log Work Day
           </button>

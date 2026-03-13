@@ -1444,17 +1444,17 @@ export default function SpendingPage() {
     <div className="page-content">
       {/* Header strip */}
       <div style={{
-        background: `linear-gradient(135deg, ${COLOR.primary}, ${COLOR.dark})`,
+        background: COLOR.soft,
+        border: `1px solid ${COLOR.primary}30`,
         borderRadius: 'var(--radius-lg)',
         padding: '1.5rem',
         marginBottom: '1.5rem',
-        color: 'white',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '2rem' }}>💰</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ fontSize: '2.5rem' }}>💰</span>
           <div>
-            <h1 style={{ color: 'white', fontSize: '1.5rem', marginBottom: '0.125rem' }}>Spending</h1>
-            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.88rem', margin: 0 }}>
+            <h1 style={{ color: COLOR.primary, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', marginBottom: '0.125rem' }}>Spending</h1>
+            <p style={{ color: COLOR.text, fontSize: '0.875rem', margin: 0 }}>
               Track expenses, income, and shopping
             </p>
           </div>

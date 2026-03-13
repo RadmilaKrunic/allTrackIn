@@ -347,20 +347,24 @@ export default function TrainingPage() {
     <div className="page-content">
       {/* Header */}
       <div style={{
-        background: `linear-gradient(135deg, ${C.primary} 0%, ${C.dark} 100%)`,
+        background: C.soft,
+        border: `1px solid ${C.primary}30`,
         borderRadius: 'var(--radius-xl)', padding: '1.5rem', marginBottom: '1.25rem',
-        color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem',
       }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '1.35rem', color: 'white' }}>🏃 Training & Fitness</h2>
-          <p style={{ margin: '0.25rem 0 0', opacity: 0.85, fontSize: '0.875rem' }}>
-            {monthStats.totalWorkouts} workout{monthStats.totalWorkouts !== 1 ? 's' : ''} · {
-              monthStats.totalMins >= 60
-                ? `${Math.floor(monthStats.totalMins / 60)}h ${monthStats.totalMins % 60}m`
-                : `${monthStats.totalMins}m`} this month
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ fontSize: '2.5rem' }}>🏃</span>
+          <div>
+            <h1 style={{ margin: 0, color: C.primary, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)' }}>Training & Fitness</h1>
+            <p style={{ margin: '0.25rem 0 0', color: C.text, fontSize: '0.875rem' }}>
+              {monthStats.totalWorkouts} workout{monthStats.totalWorkouts !== 1 ? 's' : ''} · {
+                monthStats.totalMins >= 60
+                  ? `${Math.floor(monthStats.totalMins / 60)}h ${monthStats.totalMins % 60}m`
+                  : `${monthStats.totalMins}m`} this month
+            </p>
+          </div>
         </div>
-        <button className="btn" onClick={() => openAdd()} style={{ background: 'white', color: C.dark, fontWeight: 600 }}>
+        <button className="btn" onClick={() => openAdd()} style={{ background: C.primary, color: 'white', fontWeight: 600 }}>
           + Log Workout
         </button>
       </div>

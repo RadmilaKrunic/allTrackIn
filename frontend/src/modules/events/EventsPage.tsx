@@ -192,17 +192,23 @@ export default function EventsPage() {
   return (
     <div className="page-content">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: C.text, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            🗓 Events & Notes
-          </h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: 0 }}>
-            {allEvents.length} event{allEvents.length !== 1 ? 's' : ''}
-          </p>
+      <div style={{
+        background: C.soft,
+        border: `1px solid ${C.primary}30`,
+        borderRadius: 'var(--radius-xl)', padding: '1.5rem', marginBottom: '1.5rem',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ fontSize: '2.5rem' }}>🗓</span>
+          <div>
+            <h1 style={{ margin: 0, color: C.primary, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)' }}>Events & Notes</h1>
+            <p style={{ margin: '0.25rem 0 0', color: C.text, fontSize: '0.875rem' }}>
+              {allEvents.length} event{allEvents.length !== 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
         {mainTab === 'events' && (
-          <button className="btn btn-primary" onClick={() => openAdd()} style={{ background: C.primary }}>
+          <button className="btn btn-primary" onClick={() => openAdd()} style={{ background: C.primary, color: 'white', fontWeight: 600 }}>
             + Add Event
           </button>
         )}
