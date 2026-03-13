@@ -1,7 +1,9 @@
 import Datastore from 'nedb-promises';
 import path from 'path';
 
-const DATA_DIR = path.join(__dirname, '../../data');
+// On Railway: set DATA_PATH env var to the mounted volume path (e.g. /app/data)
+// Locally: falls back to the repo's backend/data/ directory
+const DATA_DIR = process.env.DATA_PATH ?? path.join(__dirname, '../../data');
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createStore = (filename: string): Datastore<any> =>
