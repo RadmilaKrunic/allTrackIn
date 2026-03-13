@@ -415,6 +415,41 @@ function ModuleTogglesSection() {
 // ─── Habits Section ───────────────────────────────────────────────────────────
 const HABIT_COLORS = ['#0EA5E9', '#6366F1', '#22C55E', '#F97316', '#EF4444', '#A855F7', '#EC4899', '#F59E0B'];
 
+type HabitFormValue = { name: string; icon: string; color: string };
+
+function HabitForm({ value, onChange }: { value: HabitFormValue; onChange: (v: HabitFormValue) => void }) {
+  return (
+    <>
+      <div className="form-group">
+        <label className="form-label">Habit name *</label>
+        <input className="form-input" value={value.name} onChange={e => onChange({ ...value, name: e.target.value })} placeholder="e.g. Drink water, Exercise, Meditate..." />
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label className="form-label">Icon (emoji)</label>
+          <input className="form-input" value={value.icon} onChange={e => onChange({ ...value, icon: e.target.value })} placeholder="💧" />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Color</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.25rem' }}>
+            {HABIT_COLORS.map(c => (
+              <button
+                key={c}
+                onClick={() => onChange({ ...value, color: c })}
+                style={{
+                  width: '28px', height: '28px', borderRadius: '50%', background: c,
+                  border: value.color === c ? '3px solid var(--color-text)' : '2px solid transparent',
+                  cursor: 'pointer', transition: 'border 0.15s',
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function HabitsSection() {
   const { notify } = useApp();
   const qc = useQueryClient();
@@ -457,40 +492,6 @@ function HabitsSection() {
     },
     onError: (err: Error) => notify(err.message, 'error'),
   });
-
-  const HabitForm = ({ value, onChange }: {
-    value: typeof form;
-    onChange: (v: typeof form) => void;
-  }) => (
-    <>
-      <div className="form-group">
-        <label className="form-label">Habit name *</label>
-        <input className="form-input" value={value.name} onChange={e => onChange({ ...value, name: e.target.value })} placeholder="e.g. Drink water, Exercise, Meditate..." />
-      </div>
-      <div className="form-row">
-        <div className="form-group">
-          <label className="form-label">Icon (emoji)</label>
-          <input className="form-input" value={value.icon} onChange={e => onChange({ ...value, icon: e.target.value })} placeholder="💧" />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Color</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.25rem' }}>
-            {HABIT_COLORS.map(c => (
-              <button
-                key={c}
-                onClick={() => onChange({ ...value, color: c })}
-                style={{
-                  width: '28px', height: '28px', borderRadius: '50%', background: c,
-                  border: value.color === c ? '3px solid var(--color-text)' : '2px solid transparent',
-                  cursor: 'pointer', transition: 'border 0.15s',
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
 
   return (
     <div className="card">
