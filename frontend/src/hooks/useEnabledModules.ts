@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { settingsApi } from '../api/client';
 import type { ModuleKey } from '../types';
 
-const ALL_MODULES: ModuleKey[] = ['spending', 'training', 'books', 'events', 'work', 'eating', 'period'];
+const ALL_MODULES: ModuleKey[] = ['events', 'todo', 'work', 'eating', 'training', 'spending', 'period', 'books'];
 
 export function useEnabledModules(): Set<ModuleKey> {
   const { data: prefs } = useQuery({

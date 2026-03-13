@@ -94,13 +94,14 @@ function TodaySummary({ data }: { data: DashboardData }) {
 function ModuleGrid() {
   const navigate = useNavigate();
   const modules = [
-    { to: '/spending', label: 'Spending', icon: '💰', color: MODULE_COLORS.spending.primary, soft: MODULE_COLORS.spending.soft },
-    { to: '/training', label: 'Training', icon: '🏃', color: MODULE_COLORS.training.primary, soft: MODULE_COLORS.training.soft },
-    { to: '/books',    label: 'Books',    icon: '📚', color: MODULE_COLORS.books.primary,    soft: MODULE_COLORS.books.soft },
     { to: '/events',   label: 'Events',   icon: '🗓', color: MODULE_COLORS.events.primary,   soft: MODULE_COLORS.events.soft },
+    { to: '/todo',     label: 'To-Do',    icon: '✅', color: MODULE_COLORS.todo.primary,     soft: MODULE_COLORS.todo.soft },
     { to: '/work',     label: 'Work',     icon: '💼', color: MODULE_COLORS.work.primary,     soft: MODULE_COLORS.work.soft },
     { to: '/eating',   label: 'Eating',   icon: '🥗', color: MODULE_COLORS.eating.primary,   soft: MODULE_COLORS.eating.soft },
+    { to: '/training', label: 'Training', icon: '🏃', color: MODULE_COLORS.training.primary, soft: MODULE_COLORS.training.soft },
+    { to: '/spending', label: 'Spending', icon: '💰', color: MODULE_COLORS.spending.primary, soft: MODULE_COLORS.spending.soft },
     { to: '/period',   label: 'Period',   icon: '🌸', color: MODULE_COLORS.period.primary,   soft: MODULE_COLORS.period.soft },
+    { to: '/books',    label: 'Reading',  icon: '📚', color: MODULE_COLORS.books.primary,    soft: MODULE_COLORS.books.soft },
   ];
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
@@ -124,11 +125,13 @@ const ACTIVITY_ICONS: Record<string, string> = { running: '🏃', walking: '🚶
 const MODULE_ROUTE: Record<string, string> = {
   events: '/events',
   notes: '/events',
+  todo: '/todo',
   training: '/training',
   spending: '/spending',
   work: '/work',
   eating: '/eating',
   period: '/period',
+  books: '/books',
 };
 
 function DayFlyout({

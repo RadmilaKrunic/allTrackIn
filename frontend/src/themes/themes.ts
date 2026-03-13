@@ -181,6 +181,7 @@ export const MODULE_COLORS: Record<string, ModuleColor> = {
   events:   { primary: '#14B8A6', soft: '#F0FDFA', dark: '#0F766E', text: '#115E59' },
   work:     { primary: '#3B82F6', soft: '#EFF6FF', dark: '#1D4ED8', text: '#1E40AF' },
   eating:   { primary: '#22C55E', soft: '#F0FDF4', dark: '#15803D', text: '#166534' },
+  todo:     { primary: '#6366F1', soft: '#EEF2FF', dark: '#4338CA', text: '#3730A3' },
   notes:    { primary: '#EAB308', soft: '#FEFCE8', dark: '#A16207', text: '#854D0E' },
   period:   { primary: '#E11D48', soft: '#FFF1F2', dark: '#9F1239', text: '#881337' },
 };

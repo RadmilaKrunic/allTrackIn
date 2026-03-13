@@ -13,6 +13,7 @@ import eatingRouter from './modules/eating/eating.router';
 import settingsRouter from './modules/settings/settings.router';
 import notesRouter from './modules/notes/notes.router';
 import periodRouter from './modules/period/period.router';
+import todoRouter from './modules/todo/todo.router';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import { db } from './config/database';
 import { BaseService } from './shared/base.service';
@@ -104,6 +105,7 @@ app.use('/api/eating', eatingRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/notes', notesRouter);
 app.use('/api/period', periodRouter);
+app.use('/api/todos', todoRouter);
 
 // ─── Serve frontend in production ───────────────────────────────────────────
 if (process.env.NODE_ENV === 'production') {

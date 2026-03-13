@@ -9,10 +9,10 @@ import { PeriodSettingsSection } from '../modules/period/PeriodPage';
 import { MODULE_COLORS } from '../themes/themes';
 import type { Category, Quote, ModuleKey } from '../types';
 
-const ALL_MODULES: ModuleKey[] = ['spending', 'training', 'books', 'events', 'work', 'eating', 'period'];
-const MODULES = ['spending', 'training', 'books', 'events', 'work', 'eating'];
+const ALL_MODULES: ModuleKey[] = ['events', 'todo', 'work', 'eating', 'training', 'spending', 'period', 'books'];
+const MODULES = ['events', 'work', 'eating', 'training', 'spending'];
 const MODULE_ICONS: Record<string, string> = {
-  spending: '💰', training: '🏃', books: '📚', events: '🗓', work: '💼', eating: '🥗', period: '🌸',
+  events: '🗓', todo: '✅', work: '💼', eating: '🥗', training: '🏃', spending: '💰', period: '🌸', books: '📚',
 };
 
 // ─── Categories Section ──────────────────────────────────────────────────────
@@ -357,8 +357,8 @@ function ModuleTogglesSection() {
   });
 
   const MODULE_LABELS: Record<string, string> = {
-    spending: 'Spending', training: 'Training', books: 'Books',
-    events: 'Events & Notes', work: 'Work', eating: 'Eating', period: 'Period Tracker',
+    events: 'Events & Notes', todo: 'To-Do Lists', work: 'Work', eating: 'Eating',
+    training: 'Training', spending: 'Spending', period: 'Period Tracker', books: 'Reading',
   };
 
   const enabled: ModuleKey[] = prefs?.enabledModules ?? ALL_MODULES;

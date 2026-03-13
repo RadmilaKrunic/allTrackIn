@@ -3,18 +3,19 @@ import { MODULE_COLORS } from '../../themes/themes';
 import { useEnabledModules } from '../../hooks/useEnabledModules';
 
 const ALL_PRIMARY = [
-  { to: '/',         label: 'Home',    icon: '🏠', exact: true                                                           },
-  { to: '/spending', label: 'Spend',   icon: '💰', color: MODULE_COLORS.spending.primary, moduleKey: 'spending' },
-  { to: '/training', label: 'Train',   icon: '🏃', color: MODULE_COLORS.training.primary, moduleKey: 'training' },
-  { to: '/books',    label: 'Books',   icon: '📚', color: MODULE_COLORS.books.primary,    moduleKey: 'books'    },
-  { to: '/events',   label: 'Events',  icon: '🗓', color: MODULE_COLORS.events.primary,   moduleKey: 'events'   },
+  { to: '/',       label: 'Home',    icon: '🏠', exact: true                                                         },
+  { to: '/events', label: 'Events',  icon: '🗓', color: MODULE_COLORS.events.primary,   moduleKey: 'events'   },
+  { to: '/todo',   label: 'To-Do',   icon: '✅', color: MODULE_COLORS.todo.primary,     moduleKey: 'todo'     },
+  { to: '/work',   label: 'Work',    icon: '💼', color: MODULE_COLORS.work.primary,     moduleKey: 'work'     },
+  { to: '/eating', label: 'Eating',  icon: '🥗', color: MODULE_COLORS.eating.primary,   moduleKey: 'eating'   },
 ];
 
 const ALL_MORE = [
-  { to: '/work',     label: 'Work',     icon: '💼', color: MODULE_COLORS.work.primary,   moduleKey: 'work'   },
-  { to: '/eating',   label: 'Eating',   icon: '🥗', color: MODULE_COLORS.eating.primary, moduleKey: 'eating' },
-  { to: '/period',   label: 'Period',   icon: '🌸', color: MODULE_COLORS.period.primary, moduleKey: 'period' },
-  { to: '/settings', label: 'Settings', icon: '⚙️'                                                           },
+  { to: '/training', label: 'Training',  icon: '🏃', color: MODULE_COLORS.training.primary, moduleKey: 'training' },
+  { to: '/spending', label: 'Spending',  icon: '💰', color: MODULE_COLORS.spending.primary, moduleKey: 'spending' },
+  { to: '/period',   label: 'Period',    icon: '🌸', color: MODULE_COLORS.period.primary,   moduleKey: 'period'   },
+  { to: '/books',    label: 'Reading',   icon: '📚', color: MODULE_COLORS.books.primary,    moduleKey: 'books'    },
+  { to: '/settings', label: 'Settings',  icon: '⚙️'                                                               },
 ];
 
 export default function BottomNav() {

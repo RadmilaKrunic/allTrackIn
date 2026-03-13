@@ -127,6 +127,19 @@ export interface EatingEntry extends BaseDocument {
   tags?: string[];
 }
 
+// ─── Todo ──────────────────────────────────────────────────────────────────
+export interface TodoItem {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+export interface TodoEntry extends BaseDocument {
+  title: string;
+  date: string; // yyyy-MM-dd
+  items: TodoItem[];
+}
+
 // ─── Notes ─────────────────────────────────────────────────────────────────
 export interface NoteEntry extends BaseDocument {
   date: string;

@@ -3,7 +3,7 @@ import type {
   SpendingEntry, TrainingEntry, BookEntry, EventEntry,
   WorkEntry, EatingEntry, Category, Quote, Preferences,
   DashboardData, CalendarData, NoteEntry, PeriodEntry,
-  PeriodSettings, PeriodPredictions, ReadingLogEntry,
+  PeriodSettings, PeriodPredictions, ReadingLogEntry, TodoEntry,
 } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -124,6 +124,8 @@ export const settingsApi = {
   deleteQuote: (id: string) =>
     http.delete(`/settings/quotes/${id}`),
 };
+
+export const todoApi = crud<TodoEntry>('todos');
 
 export const notesApi = {
   ...crud<NoteEntry>('notes'),
