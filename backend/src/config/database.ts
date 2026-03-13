@@ -21,4 +21,5 @@ export const db = {
   quotes: createStore('quotes'),
   notes: createStore('notes'),
   period: createStore('period'),
+  readingLog: createStore('reading_log'),
 };

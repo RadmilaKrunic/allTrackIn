@@ -94,6 +94,11 @@ export interface TrainingEntry extends BaseEntity {
 export type BookStatus = 'reading' | 'finished' | 'paused' | 'wishlist';
 export type BorrowType = 'borrowed_from' | 'lent_to';
 
+export interface ReadingLogEntry extends BaseEntity {
+  date: string; // yyyy-MM-dd
+  read: boolean;
+}
+
 export interface BookEntry extends BaseEntity {
   title: string;
   author?: string;
