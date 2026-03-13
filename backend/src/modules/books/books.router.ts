@@ -1,9 +1,15 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { BaseService } from '../../shared/base.service';
 import { db } from '../../config/database';
-import { BookEntry } from '../../types/models';
+import { BookEntry, BaseDocument } from '../../types/models';
+
+interface ReadingLogDoc extends BaseDocument {
+  date: string;
+  read: boolean;
+}
 
 const service = new BaseService<BookEntry>(db.books);
+const logService = new BaseService<ReadingLogDoc>(db.readingLog);
 const router = Router();
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -15,6 +21,29 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     res.json(await service.findAll(query, { sort: { updatedAt: -1 } }));
   } catch (err) { next(err); }
 });
+
+// ─── Reading Log ─────────────────────────────────────────────────────────────
+
+router.get('/reading-log', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json(await logService.findAll({}, { sort: { date: -1 } }));
+  } catch (err) { next(err); }
+});
+
+router.put('/reading-log/:date', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { date } = req.params;
+    const { read } = req.body;
+    const existing = await logService.findAll({ date });
+    if (existing.length > 0) {
+      res.json(await logService.update(existing[0]._id!, { read }));
+    } else {
+      res.status(201).json(await logService.create({ date, read }));
+    }
+  } catch (err) { next(err); }
+});
+
+// ─── Book CRUD ───────────────────────────────────────────────────────────────
 
 router.get('/wishlist', async (_req: Request, res: Response, next: NextFunction) => {
   try {

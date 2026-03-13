@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth, getDay, eachDayOfInterval } from 'date-fns';
-import type { BookEntry, BookStatus, BorrowType } from '../../types';
+import type { BookEntry, BookStatus, BorrowType, ReadingLogEntry } from '../../types';
 import { booksApi } from '../../api/client';
 import { useApp } from '../../contexts/AppContext';
 import { MODULE_COLORS } from '../../themes/themes';
@@ -440,6 +440,18 @@ export default function BooksPage() {
     queryFn: () => booksApi.getAll(),
   });
 
+  const { data: readingLog = [] } = useQuery<ReadingLogEntry[]>({
+    queryKey: ['books', 'reading-log'],
+    queryFn: () => booksApi.getReadingLog(),
+  });
+
+  const toggleReadMutation = useMutation({
+    mutationFn: ({ date, read }: { date: string; read: boolean }) =>
+      booksApi.toggleReadingDay(date, read),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['books', 'reading-log'] }),
+    onError: (err: Error) => notify(err.message, 'error'),
+  });
+
   const createMutation = useMutation({
     mutationFn: (data: Partial<BookEntry>) => booksApi.create(data),
     onSuccess: () => {
@@ -509,6 +521,32 @@ export default function BooksPage() {
     return map;
   }, [allBooks]);
 
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+  // Reading log helpers
+  const readingLogByDate = useMemo(() => {
+    const m = new Map<string, boolean>();
+    for (const e of readingLog) m.set(e.date, e.read);
+    return m;
+  }, [readingLog]);
+
+  const todayRead = readingLogByDate.get(todayStr) ?? false;
+
+  // Current reading streak
+  const readingStreak = useMemo(() => {
+    let streak = 0;
+    const d = new Date();
+    // Start from today or yesterday depending on whether today is logged
+    if (!readingLogByDate.get(todayStr)) d.setDate(d.getDate() - 1);
+    while (true) {
+      const ds = format(d, 'yyyy-MM-dd');
+      if (!readingLogByDate.get(ds)) break;
+      streak++;
+      d.setDate(d.getDate() - 1);
+    }
+    return streak;
+  }, [readingLogByDate, todayStr]);
+
   // Calendar days for statsMonth
   const calendarData = useMemo(() => {
     const monthStart = startOfMonth(statsMonth);
@@ -517,8 +555,6 @@ export default function BooksPage() {
     const startDow = getDay(monthStart); // 0=Sun
     return { days, startDow };
   }, [statsMonth]);
-
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   function prevMonth() {
     setStatsMonth(m => {
@@ -636,6 +672,41 @@ export default function BooksPage() {
         </button>
       </div>
 
+      {/* Read Today Banner */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '1rem',
+        background: todayRead ? '#F0FDF4' : 'var(--color-surface)',
+        border: `1px solid ${todayRead ? '#86EFAC' : 'var(--color-border)'}`,
+        borderRadius: 'var(--radius-lg)', padding: '1rem 1.25rem',
+        marginBottom: '1.25rem', flexWrap: 'wrap',
+      }}>
+        <span style={{ fontSize: '1.75rem' }}>{todayRead ? '📖' : '🔖'}</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, fontSize: '0.95rem', color: todayRead ? '#15803D' : 'var(--color-text)' }}>
+            {todayRead ? 'You read today! 🎉' : 'Did you read today?'}
+          </div>
+          {readingStreak > 0 && (
+            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>
+              🔥 {readingStreak}-day streak
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => toggleReadMutation.mutate({ date: todayStr, read: !todayRead })}
+          disabled={toggleReadMutation.isPending}
+          style={{
+            padding: '0.5rem 1.25rem', borderRadius: 'var(--radius-md)',
+            border: `1px solid ${todayRead ? '#86EFAC' : C.primary}`,
+            background: todayRead ? '#DCFCE7' : C.primary,
+            color: todayRead ? '#15803D' : 'white',
+            fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem',
+            fontFamily: 'inherit',
+          }}
+        >
+          {todayRead ? '✓ Read' : 'Mark as Read'}
+        </button>
+      </div>
+
       {/* Stats row */}
       <div style={{
         display: 'grid',
@@ -664,6 +735,13 @@ export default function BooksPage() {
           <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Borrowed</div>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#92400E' }}>{borrowedBooks.length}</div>
           <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>tracked</div>
+        </div>
+        <div className="card" style={{ padding: '1rem' }}>
+          <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Reading streak</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: readingStreak > 0 ? '#15803D' : 'var(--color-text-muted)' }}>
+            {readingStreak > 0 ? `🔥 ${readingStreak}` : '—'}
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>day{readingStreak !== 1 ? 's' : ''}</div>
         </div>
       </div>
 
@@ -811,15 +889,16 @@ export default function BooksPage() {
                 const dayStr = format(day, 'yyyy-MM-dd');
                 const events = bookEventsByDate.get(dayStr) ?? [];
                 const isToday = dayStr === todayStr;
+                const didRead = readingLogByDate.get(dayStr) === true;
 
                 // Determine dominant event type (end takes priority over start)
                 const hasEnd = events.some(e => e.type === 'end');
                 const hasStart = events.some(e => e.type === 'start');
                 const hasEvent = hasEnd || hasStart;
 
-                let cellBg = 'var(--color-surface)';
-                let cellIcon: string | null = null;
-                let titleText = '';
+                let cellBg = didRead ? '#F0FDF4' : 'var(--color-surface)';
+                let cellIcon: string | null = didRead ? '📖' : null;
+                let titleText = didRead ? 'Read this day' : '';
 
                 if (hasEnd) {
                   cellBg = '#DCFCE7'; // green-100
@@ -828,15 +907,18 @@ export default function BooksPage() {
                   titleText = `Finished: ${books.join(', ')}`;
                 } else if (hasStart) {
                   cellBg = '#DBEAFE'; // blue-100
-                  cellIcon = '📖';
+                  cellIcon = hasStart ? (didRead ? '📖' : '🔖') : cellIcon;
                   const books = events.filter(e => e.type === 'start').map(e => e.book.title);
-                  titleText = `Started: ${books.join(', ')}`;
+                  titleText = `Started: ${books.join(', ')}${didRead ? ' · Read' : ''}`;
                 }
+
+                const hasAny = hasEvent || didRead;
 
                 return (
                   <div
                     key={dayStr}
                     title={titleText || undefined}
+                    onClick={() => toggleReadMutation.mutate({ date: dayStr, read: !didRead })}
                     style={{
                       aspectRatio: '1',
                       display: 'flex',
@@ -844,18 +926,20 @@ export default function BooksPage() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderRadius: 'var(--radius-sm)',
-                      background: hasEvent ? cellBg : 'var(--color-surface)',
+                      background: cellBg,
                       border: isToday
                         ? `2px solid ${C.primary}`
-                        : '1px solid transparent',
+                        : hasAny ? '1px solid rgba(0,0,0,0.08)' : '1px solid transparent',
                       fontSize: cellIcon ? '0.7rem' : '0.72rem',
-                      color: hasEvent ? (hasEnd ? '#15803D' : '#1D4ED8') : 'var(--color-text-secondary)',
-                      fontWeight: isToday ? 700 : 400,
+                      color: hasEvent ? (hasEnd ? '#15803D' : '#1D4ED8') : didRead ? '#15803D' : 'var(--color-text-secondary)',
+                      fontWeight: isToday ? 700 : hasAny ? 600 : 400,
                       lineHeight: 1,
                       gap: '0.05rem',
-                      cursor: hasEvent ? 'default' : 'default',
-                      transition: 'background 0.15s',
+                      cursor: 'pointer',
+                      transition: 'background 0.15s, filter 0.15s',
                     }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.filter = 'brightness(0.94)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = ''; }}
                   >
                     {cellIcon && (
                       <span style={{ fontSize: '0.65rem', lineHeight: 1 }}>{cellIcon}</span>
@@ -866,10 +950,14 @@ export default function BooksPage() {
               })}
             </div>
             {/* Legend */}
-            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.625rem', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.625rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <div style={{ width: '0.7rem', height: '0.7rem', borderRadius: '2px', background: '#F0FDF4', border: '1px solid rgba(0,0,0,0.08)' }} />
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>📖 Read</span>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <div style={{ width: '0.7rem', height: '0.7rem', borderRadius: '2px', background: '#DBEAFE', border: '1px solid #BFDBFE' }} />
-                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>📖 Started</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>🔖 Started</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <div style={{ width: '0.7rem', height: '0.7rem', borderRadius: '2px', background: '#DCFCE7', border: '1px solid #BBF7D0' }} />

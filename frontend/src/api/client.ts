@@ -3,7 +3,7 @@ import type {
   SpendingEntry, TrainingEntry, BookEntry, EventEntry,
   WorkEntry, EatingEntry, Category, Quote, Preferences,
   DashboardData, CalendarData, NoteEntry, PeriodEntry,
-  PeriodSettings, PeriodPredictions,
+  PeriodSettings, PeriodPredictions, ReadingLogEntry,
 } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -80,6 +80,9 @@ export const booksApi = {
   ...crud<BookEntry>('books'),
   getWishlist: () => http.get<BookEntry[], BookEntry[]>('/books/wishlist'),
   getBorrowed: () => http.get<BookEntry[], BookEntry[]>('/books/borrowed'),
+  getReadingLog: () => http.get<ReadingLogEntry[], ReadingLogEntry[]>('/books/reading-log'),
+  toggleReadingDay: (date: string, read: boolean) =>
+    http.put<ReadingLogEntry, ReadingLogEntry>(`/books/reading-log/${date}`, { read }),
 };
 export const eventsApi = {
   ...crud<EventEntry>('events'),

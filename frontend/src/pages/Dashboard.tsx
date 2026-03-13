@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO, differenceInDays } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, type NavigateFunction } from 'react-router-dom';
 import { dashboardApi, notesApi } from '../api/client';
 import CalendarView from '../components/calendar/CalendarView';
 import { MODULE_COLORS } from '../themes/themes';
@@ -121,9 +121,20 @@ type AnyItem = Record<string, unknown> & { module?: string; date?: string; start
 const EVENT_ICONS: Record<string, string> = { birthday: '🎂', vacation: '✈️', appointment: '📅', reminder: '⏰', holiday: '🎉', other: '📌' };
 const ACTIVITY_ICONS: Record<string, string> = { running: '🏃', walking: '🚶', gym: '🏋️', cycling: '🚴', yoga: '🧘', swimming: '🏊', other: '💪' };
 
+const MODULE_ROUTE: Record<string, string> = {
+  events: '/events',
+  notes: '/events',
+  training: '/training',
+  spending: '/spending',
+  work: '/work',
+  eating: '/eating',
+  period: '/period',
+};
+
 function DayFlyout({
   day, items, onClose, onAddNote,
 }: { day: Date; items: AnyItem[]; onClose: () => void; onAddNote: (date: string) => void }) {
+  const navigate = useNavigate();
   const dateStr = format(day, 'yyyy-MM-dd');
   const displayDate = format(day, 'EEEE, MMMM d, yyyy');
 
@@ -199,7 +210,7 @@ function DayFlyout({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                   {modItems.map((item, idx) => (
-                    <FlyoutItem key={(item._id as string) ?? idx} item={item} module={key} />
+                    <FlyoutItem key={(item._id as string) ?? idx} item={item} module={key} navigate={navigate} onClose={onClose} />
                   ))}
                 </div>
               </div>
@@ -215,9 +226,10 @@ function DayFlyout({
 
 function str(v: unknown): string { return v != null ? String(v) : ''; }
 
-function FlyoutItem({ item, module: mod }: { item: AnyItem; module: string }) {
+function FlyoutItem({ item, module: mod, navigate, onClose }: { item: AnyItem; module: string; navigate: NavigateFunction; onClose: () => void }) {
   const color = MODULE_COLORS[mod]?.primary ?? '#999';
   const soft = MODULE_COLORS[mod]?.soft ?? 'var(--color-surface)';
+  const route = MODULE_ROUTE[mod];
 
   let content: React.ReactNode = null;
 
@@ -302,9 +314,21 @@ function FlyoutItem({ item, module: mod }: { item: AnyItem; module: string }) {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', padding: '0.625rem 0.75rem', borderRadius: 'var(--radius-md)', background: soft, border: `1px solid ${color}25`, fontSize: '0.875rem' }}>
+    <button
+      onClick={() => { if (route) { onClose(); navigate(route); } }}
+      style={{
+        display: 'flex', alignItems: 'flex-start', gap: '0.625rem',
+        padding: '0.625rem 0.75rem', borderRadius: 'var(--radius-md)',
+        background: soft, border: `1px solid ${color}25`, fontSize: '0.875rem',
+        width: '100%', textAlign: 'left', cursor: route ? 'pointer' : 'default',
+        fontFamily: 'inherit', transition: 'filter 0.15s',
+      }}
+      onMouseEnter={e => { if (route) (e.currentTarget as HTMLElement).style.filter = 'brightness(0.96)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = ''; }}
+    >
       {content}
-    </div>
+      {route && <span style={{ marginLeft: 'auto', color, fontSize: '0.75rem', opacity: 0.6, flexShrink: 0, alignSelf: 'center' }}>→</span>}
+    </button>
   );
 }
 
@@ -399,20 +423,20 @@ export default function Dashboard() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1.2fr)', gap: '1.5rem', alignItems: 'start' }}>
-        <div>
-          <CalendarView onDayClick={handleDayClick} />
-        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div className="card">
-            <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.95rem' }}>🗓 Upcoming</h3></div>
-            <div className="card-body" style={{ paddingTop: '0.75rem' }}>
-              {data && <UpcomingEvents events={data.upcomingEvents} />}
-            </div>
-          </div>
+          <CalendarView onDayClick={handleDayClick} />
           <div className="card">
             <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.95rem' }}>🚀 Quick Access</h3></div>
             <div className="card-body" style={{ paddingTop: '0.75rem' }}>
               <ModuleGrid />
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="card">
+            <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.95rem' }}>🗓 Upcoming</h3></div>
+            <div className="card-body" style={{ paddingTop: '0.75rem' }}>
+              {data && <UpcomingEvents events={data.upcomingEvents} />}
             </div>
           </div>
         </div>
