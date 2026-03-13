@@ -332,21 +332,25 @@ export default function EatingPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {/* Header */}
       <div style={{
-        background: `linear-gradient(135deg, ${COLOR.primary} 0%, ${COLOR.dark} 100%)`,
+        background: COLOR.soft,
+        border: `1px solid ${COLOR.primary}30`,
         borderRadius: 'var(--radius-xl)', padding: '1.5rem',
-        color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem',
       }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '1.35rem' }}>🥗 Eating & Nutrition</h2>
-          <p style={{ margin: '0.25rem 0 0', opacity: 0.85, fontSize: '0.875rem' }}>
-            {totalDietDays} diet days this month · {mealEntries.length} meal logs · {recipes.length} recipes
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ fontSize: '2.5rem' }}>🥗</span>
+          <div>
+            <h1 style={{ margin: 0, color: COLOR.primary, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)' }}>Eating & Nutrition</h1>
+            <p style={{ margin: '0.25rem 0 0', color: COLOR.text, fontSize: '0.875rem' }}>
+              {totalDietDays} diet days this month · {mealEntries.length} meal logs · {recipes.length} recipes
+            </p>
+          </div>
         </div>
         <button className="btn" onClick={() => {
           if (tab === 'diet') openAddDiet();
           else if (tab === 'meals') openAddMeal();
           else openAddRecipe();
-        }} style={{ background: 'white', color: COLOR.dark, fontWeight: 600 }}>
+        }} style={{ background: COLOR.primary, color: 'white', fontWeight: 600 }}>
           + {tab === 'diet' ? 'Log Diet' : tab === 'meals' ? 'Log Meals' : 'Add Recipe'}
         </button>
       </div>
