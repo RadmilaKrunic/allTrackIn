@@ -5,7 +5,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
 <Project>
   <PropertyGroup>
     <_PublishTargetUrl>C:\Projekti\alltrackin\Publish</_PublishTargetUrl>
-    <History>True|2026-03-14T11:07:05.8376254Z||;</History>
+    <History>True|2026-03-14T20:22:37.1171332Z||;True|2026-03-14T21:18:42.0035309+01:00||;True|2026-03-14T15:31:57.9878190+01:00||;True|2026-03-14T14:58:53.9120418+01:00||;True|2026-03-14T14:44:12.8145208+01:00||;True|2026-03-14T12:07:05.8376254+01:00||;</History>
     <LastFailureDetails />
   </PropertyGroup>
 </Project>
