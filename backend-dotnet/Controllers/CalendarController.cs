@@ -1,5 +1,6 @@
 using AllTrackIn.Api.Extensions;
 using AllTrackIn.Api.Models;
+using AllTrackIn.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
