@@ -74,14 +74,21 @@ public class HabitsController : ControllerBase
     }
 
     // ─── Habit Logs ────────────────────────────────────────────────────────────
+    // Routes use singular "log" to match the frontend API client
 
-    [HttpGet("logs")]
-    public async Task<IActionResult> GetLogs([FromQuery] string? date, [FromQuery] string? habitId)
+    [HttpGet("log")]
+    public async Task<IActionResult> GetLogs([FromQuery] string? date, [FromQuery] string? startDate,
+        [FromQuery] string? endDate, [FromQuery] string? habitId)
     {
         var uid = User.GetUserId();
         var filter = Builders<HabitLog>.Filter.Eq(e => e.UserId, uid);
+
         if (!string.IsNullOrEmpty(date))
             filter &= Builders<HabitLog>.Filter.Eq(e => e.Date, date);
+        else if (!string.IsNullOrEmpty(startDate) && !string.IsNullOrEmpty(endDate))
+            filter &= Builders<HabitLog>.Filter.Gte(e => e.Date, startDate)
+                    & Builders<HabitLog>.Filter.Lte(e => e.Date, endDate);
+
         if (!string.IsNullOrEmpty(habitId))
             filter &= Builders<HabitLog>.Filter.Eq(e => e.HabitId, habitId);
 
@@ -89,38 +96,36 @@ public class HabitsController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("logs")]
-    public async Task<IActionResult> CreateLog([FromBody] HabitLog log)
-    {
-        log.UserId = User.GetUserId();
-        log.Id = null;
-        var created = await _logsService.CreateAsync(log);
-        return StatusCode(201, created);
-    }
-
-    [HttpPut("logs/{id}")]
-    public async Task<IActionResult> UpdateLog(string id, [FromBody] HabitLog log)
+    /// <summary>
+    /// Upsert a habit log entry for a specific date+habitId combination.
+    /// Matches frontend: PUT /habits/log/{date}/{habitId}
+    /// </summary>
+    [HttpPut("log/{date}/{habitId}")]
+    public async Task<IActionResult> ToggleLog(string date, string habitId, [FromBody] ToggleLogRequest req)
     {
         var uid = User.GetUserId();
-        var existing = await _logsService.FindByIdAsync(id);
-        if (existing == null || existing.UserId != uid) return NotFound();
+        var filter = Builders<HabitLog>.Filter.Eq(e => e.UserId, uid)
+            & Builders<HabitLog>.Filter.Eq(e => e.Date, date)
+            & Builders<HabitLog>.Filter.Eq(e => e.HabitId, habitId);
 
-        var update = Builders<HabitLog>.Update
-            .Set(e => e.Date, log.Date)
-            .Set(e => e.HabitId, log.HabitId)
-            .Set(e => e.Done, log.Done);
+        var existing = await _logsService.FindOneAsync(filter);
 
-        var updated = await _logsService.UpdateAsync(id, update);
+        if (existing == null)
+        {
+            var created = await _logsService.CreateAsync(new HabitLog
+            {
+                UserId = uid,
+                Date = date,
+                HabitId = habitId,
+                Done = req.Done
+            });
+            return Ok(created);
+        }
+
+        var update = Builders<HabitLog>.Update.Set(e => e.Done, req.Done);
+        var updated = await _logsService.UpdateAsync(existing.Id!, update);
         return Ok(updated);
     }
-
-    [HttpDelete("logs/{id}")]
-    public async Task<IActionResult> DeleteLog(string id)
-    {
-        var uid = User.GetUserId();
-        var existing = await _logsService.FindByIdAsync(id);
-        if (existing == null || existing.UserId != uid) return NotFound();
-        await _logsService.DeleteAsync(id);
-        return NoContent();
-    }
 }
+
+public record ToggleLogRequest(bool Done);
