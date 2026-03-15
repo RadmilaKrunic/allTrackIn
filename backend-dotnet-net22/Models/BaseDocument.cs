@@ -1,5 +1,4 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 using System;
 
 namespace AllTrackIn.Api.Models
@@ -7,16 +6,15 @@ namespace AllTrackIn.Api.Models
     public abstract class BaseDocument
     {
         [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
 
-        [BsonElement("userId")]
+        [BsonField("userId")]
         public string UserId { get; set; }
 
-        [BsonElement("createdAt")]
+        [BsonField("createdAt")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        [BsonElement("updatedAt")]
+        [BsonField("updatedAt")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

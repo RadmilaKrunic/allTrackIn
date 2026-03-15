@@ -1,45 +1,39 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 
 namespace AllTrackIn.Api.Models;
 
 public class Category : BaseDocument
 {
-    [BsonElement("type")]
-    public string Type { get; set; } = "category";
-
-    [BsonElement("module")]
+    [BsonField("module")]
     public string Module { get; set; } = string.Empty;
 
-    [BsonElement("name")]
+    [BsonField("name")]
     public string Name { get; set; } = string.Empty;
 
-    [BsonElement("color")]
+    [BsonField("color")]
     public string? Color { get; set; }
 
-    [BsonElement("icon")]
+    [BsonField("icon")]
     public string? Icon { get; set; }
 }
 
 public class Preferences : BaseDocument
 {
-    [BsonElement("type")]
-    public string Type { get; set; } = "preferences";
-
-    [BsonElement("theme")]
+    [BsonField("theme")]
     public string Theme { get; set; } = "default";
 
-    [BsonElement("enabledModules")]
+    [BsonField("enabledModules")]
     public List<string>? EnabledModules { get; set; }
 }
 
 public class Quote : BaseDocument
 {
-    [BsonElement("text")]
+    [BsonField("text")]
     public string Text { get; set; } = string.Empty;
 
-    [BsonElement("author")]
+    [BsonField("author")]
     public string? Author { get; set; }
 
-    [BsonElement("active")]
+    [BsonField("active")]
     public bool Active { get; set; } = true;
 }

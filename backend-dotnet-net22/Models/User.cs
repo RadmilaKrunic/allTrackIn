@@ -1,16 +1,16 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 
 namespace AllTrackIn.Api.Models
 {
     public class User : BaseDocument
     {
-        [BsonElement("email")]
+        [BsonField("email")]
         public string Email { get; set; } = string.Empty;
 
-        [BsonElement("name")]
+        [BsonField("name")]
         public string Name { get; set; } = string.Empty;
 
-        [BsonElement("passwordHash")]
+        [BsonField("passwordHash")]
         public string PasswordHash { get; set; } = string.Empty;
     }
 }

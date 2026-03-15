@@ -3,10 +3,8 @@ using AllTrackIn.Api.Models;
 using AllTrackIn.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace AllTrackIn.Api.Controllers
 {
@@ -15,70 +13,58 @@ namespace AllTrackIn.Api.Controllers
     [Authorize]
     public class CalendarController : ControllerBase
     {
-        private readonly MongoDbContext _db;
+        private readonly LiteDbContext _db;
 
-        public CalendarController(MongoDbContext db)
+        public CalendarController(LiteDbContext db)
         {
             _db = db;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] int year, [FromQuery] int month)
+        public IActionResult Get([FromQuery] int year, [FromQuery] int month)
         {
             var uid = User.GetUserId();
             var start = new DateTime(year, month, 1).ToString("yyyy-MM-dd");
             var end = new DateTime(year, month, DateTime.DaysInMonth(year, month)).ToString("yyyy-MM-dd");
 
-            var spendingFilter = Builders<SpendingEntry>.Filter.Eq(e => e.UserId, uid)
-                & Builders<SpendingEntry>.Filter.Gte(e => e.Date, start)
-                & Builders<SpendingEntry>.Filter.Lte(e => e.Date, end);
+            var spending = _db.Spending.Find(e => e.UserId == uid
+                && e.Date != null
+                && string.Compare(e.Date, start) >= 0
+                && string.Compare(e.Date, end) <= 0).ToList();
 
-            var trainingFilter = Builders<TrainingEntry>.Filter.Eq(e => e.UserId, uid)
-                & Builders<TrainingEntry>.Filter.Gte(e => e.Date, start)
-                & Builders<TrainingEntry>.Filter.Lte(e => e.Date, end);
+            var training = _db.Training.Find(e => e.UserId == uid
+                && e.Date != null
+                && string.Compare(e.Date, start) >= 0
+                && string.Compare(e.Date, end) <= 0).ToList();
 
-            var eventsFilter = Builders<EventEntry>.Filter.Eq(e => e.UserId, uid)
-                & Builders<EventEntry>.Filter.Gte(e => e.Date, start)
-                & Builders<EventEntry>.Filter.Lte(e => e.Date, end);
+            var events = _db.Events.Find(e => e.UserId == uid
+                && e.Date != null
+                && string.Compare(e.Date, start) >= 0
+                && string.Compare(e.Date, end) <= 0).ToList();
 
-            var workFilter = Builders<WorkEntry>.Filter.Eq(e => e.UserId, uid)
-                & Builders<WorkEntry>.Filter.Gte(e => e.Date, start)
-                & Builders<WorkEntry>.Filter.Lte(e => e.Date, end);
+            var work = _db.Work.Find(e => e.UserId == uid
+                && e.Date != null
+                && string.Compare(e.Date, start) >= 0
+                && string.Compare(e.Date, end) <= 0).ToList();
 
-            var eatingFilter = Builders<EatingEntry>.Filter.Eq(e => e.UserId, uid)
-                & Builders<EatingEntry>.Filter.Gte(e => e.Date, start)
-                & Builders<EatingEntry>.Filter.Lte(e => e.Date, end);
+            var eating = _db.Eating.Find(e => e.UserId == uid
+                && e.Date != null
+                && string.Compare(e.Date, start) >= 0
+                && string.Compare(e.Date, end) <= 0).ToList();
 
-            var notesFilter = Builders<NoteEntry>.Filter.Eq(e => e.UserId, uid)
-                & Builders<NoteEntry>.Filter.Gte(e => e.Date, start)
-                & Builders<NoteEntry>.Filter.Lte(e => e.Date, end);
+            var notes = _db.Notes.Find(e => e.UserId == uid
+                && e.Date != null
+                && string.Compare(e.Date, start) >= 0
+                && string.Compare(e.Date, end) <= 0).ToList();
 
-            var periodFilter = Builders<PeriodEntry>.Filter.Eq(e => e.UserId, uid)
-                & Builders<PeriodEntry>.Filter.Gte(e => e.StartDate, start)
-                & Builders<PeriodEntry>.Filter.Lte(e => e.StartDate, end)
-                & Builders<PeriodEntry>.Filter.Not(Builders<PeriodEntry>.Filter.Exists("type"));
-
-            var spendingTask = _db.Spending.FindAsync(spendingFilter);
-            var trainingTask = _db.Training.FindAsync(trainingFilter);
-            var eventsTask = _db.Events.FindAsync(eventsFilter);
-            var workTask = _db.Work.FindAsync(workFilter);
-            var eatingTask = _db.Eating.FindAsync(eatingFilter);
-            var notesTask = _db.Notes.FindAsync(notesFilter);
-            var periodTask = _db.Period.FindAsync(periodFilter);
-
-            await Task.WhenAll(spendingTask, trainingTask, eventsTask, workTask, eatingTask, notesTask, periodTask);
-
-            var spending = await (await spendingTask).ToListAsync();
-            var training = await (await trainingTask).ToListAsync();
-            var events = await (await eventsTask).ToListAsync();
-            var work = await (await workTask).ToListAsync();
-            var eating = await (await eatingTask).ToListAsync();
-            var notes = await (await notesTask).ToListAsync();
-            var period = await (await periodTask).ToListAsync();
+            var period = _db.Period.Find(e => e.UserId == uid
+                && e.StartDate != null
+                && string.Compare(e.StartDate, start) >= 0
+                && string.Compare(e.StartDate, end) <= 0).ToList();
 
             return Ok(new
             {
-                spending = spending.Select(i => new { i.Id, i.UserId, i.Date, EntryType = i.EntryType.ToString(), i.Amount, i.Category, i.Status, module = "spending" }),
+                spending = spending.Select(i => new { i.Id, i.UserId, i.Date, i.EntryType, i.Amount, i.Category, i.Status, module = "spending" }),
                 training = training.Select(i => new { i.Id, i.UserId, i.Date, i.ActivityType, i.Status, module = "training" }),
                 events = events.Select(i => new { i.Id, i.UserId, i.Date, i.Name, i.EventType, i.Status, i.Color, module = "events" }),
                 work = work.Select(i => new { i.Id, i.UserId, i.Date, i.LocationType, i.Status, module = "work" }),

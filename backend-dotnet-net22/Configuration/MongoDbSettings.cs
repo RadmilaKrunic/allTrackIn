@@ -1,9 +1,8 @@
 namespace AllTrackIn.Api.Configuration
 {
-    public class MongoDbSettings
+    public class LiteDbSettings
     {
-        public string ConnectionString { get; set; } = string.Empty;
-        public string DatabaseName { get; set; } = string.Empty;
+        public string DatabasePath { get; set; } = "allTrackin.db";
     }
 
     public class JwtSettings

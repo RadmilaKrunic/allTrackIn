@@ -1,16 +1,16 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 
 namespace AllTrackIn.Api.Models
 {
     public class NoteEntry : BaseDocument
     {
-        [BsonElement("date")]
+        [BsonField("date")]
         public string Date { get; set; } = string.Empty;
 
-        [BsonElement("title")]
+        [BsonField("title")]
         public string Title { get; set; }
 
-        [BsonElement("text")]
+        [BsonField("text")]
         public string Text { get; set; } = string.Empty;
     }
 }

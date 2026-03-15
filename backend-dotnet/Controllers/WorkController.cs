@@ -3,7 +3,6 @@ using AllTrackIn.Api.Models;
 using AllTrackIn.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 namespace AllTrackIn.Api.Controllers;
 
@@ -14,72 +13,62 @@ public class WorkController : ControllerBase
 {
     private readonly BaseService<WorkEntry> _service;
 
-    public WorkController(MongoDbContext db)
+    public WorkController(LiteDbContext db)
     {
         _service = new BaseService<WorkEntry>(db.Work);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? date, [FromQuery] string? startDate, [FromQuery] string? endDate)
+    public IActionResult GetAll([FromQuery] string? date, [FromQuery] string? startDate, [FromQuery] string? endDate)
     {
         var uid = User.GetUserId();
-        var filter = Builders<WorkEntry>.Filter.Eq(e => e.UserId, uid);
-
-        if (!string.IsNullOrEmpty(date))
-            filter &= Builders<WorkEntry>.Filter.Eq(e => e.Date, date);
-        if (!string.IsNullOrEmpty(startDate) && !string.IsNullOrEmpty(endDate))
-            filter &= Builders<WorkEntry>.Filter.Gte(e => e.Date, startDate) & Builders<WorkEntry>.Filter.Lte(e => e.Date, endDate);
-
-        var sort = Builders<WorkEntry>.Sort.Descending(e => e.Date);
-        var result = await _service.FindAllAsync(filter, sort);
+        var result = _service.FindAll(e => e.UserId == uid
+            && (string.IsNullOrEmpty(date) || e.Date == date)
+            && (string.IsNullOrEmpty(startDate) || string.IsNullOrEmpty(endDate) || (e.Date.CompareTo(startDate) >= 0 && e.Date.CompareTo(endDate) <= 0)))
+            .OrderByDescending(e => e.Date).ToList();
         return Ok(result);
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetOne(string id)
+    public IActionResult GetOne(string id)
     {
         var uid = User.GetUserId();
-        var entry = await _service.FindByIdAsync(id);
+        var entry = _service.FindById(id);
         if (entry == null || entry.UserId != uid) return NotFound();
         return Ok(entry);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] WorkEntry entry)
+    public IActionResult Create([FromBody] WorkEntry entry)
     {
         entry.UserId = User.GetUserId();
         entry.Id = null;
-        var created = await _service.CreateAsync(entry);
-        return StatusCode(201, created);
+        return StatusCode(201, _service.Create(entry));
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(string id, [FromBody] WorkEntry entry)
+    public IActionResult Update(string id, [FromBody] WorkEntry entry)
     {
         var uid = User.GetUserId();
-        var existing = await _service.FindByIdAsync(id);
+        var existing = _service.FindById(id);
         if (existing == null || existing.UserId != uid) return NotFound();
-
-        var update = Builders<WorkEntry>.Update
-            .Set(e => e.Date, entry.Date)
-            .Set(e => e.LocationType, entry.LocationType)
-            .Set(e => e.TableNumber, entry.TableNumber)
-            .Set(e => e.StartTime, entry.StartTime)
-            .Set(e => e.EndTime, entry.EndTime)
-            .Set(e => e.Notes, entry.Notes)
-            .Set(e => e.Status, entry.Status);
-
-        var updated = await _service.UpdateAsync(id, update);
-        return Ok(updated);
+        existing.Date = entry.Date;
+        existing.LocationType = entry.LocationType;
+        existing.TableNumber = entry.TableNumber;
+        existing.StartTime = entry.StartTime;
+        existing.EndTime = entry.EndTime;
+        existing.Notes = entry.Notes;
+        existing.Status = entry.Status;
+        return Ok(_service.Update(existing));
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(string id)
+    public IActionResult Delete(string id)
     {
         var uid = User.GetUserId();
-        var existing = await _service.FindByIdAsync(id);
+        var existing = _service.FindById(id);
         if (existing == null || existing.UserId != uid) return NotFound();
-        await _service.DeleteAsync(id);
+        _service.Delete(id);
         return NoContent();
     }
 }

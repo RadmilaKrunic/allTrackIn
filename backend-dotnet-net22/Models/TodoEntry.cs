@@ -1,4 +1,4 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 using System;
 using System.Collections.Generic;
 
@@ -6,25 +6,25 @@ namespace AllTrackIn.Api.Models
 {
     public class TodoItem
     {
-        [BsonElement("id")]
+        [BsonField("id")]
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        [BsonElement("text")]
+        [BsonField("text")]
         public string Text { get; set; } = string.Empty;
 
-        [BsonElement("done")]
+        [BsonField("done")]
         public bool Done { get; set; }
     }
 
     public class TodoEntry : BaseDocument
     {
-        [BsonElement("title")]
+        [BsonField("title")]
         public string Title { get; set; } = string.Empty;
 
-        [BsonElement("date")]
+        [BsonField("date")]
         public string Date { get; set; } = string.Empty;
 
-        [BsonElement("items")]
+        [BsonField("items")]
         public List<TodoItem> Items { get; set; } = new List<TodoItem>();
     }
 }

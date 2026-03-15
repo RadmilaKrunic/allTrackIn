@@ -1,27 +1,27 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 
 namespace AllTrackIn.Api.Models;
 
 public class WorkEntry : BaseDocument
 {
-    [BsonElement("date")]
+    [BsonField("date")]
     public string Date { get; set; } = string.Empty;
 
-    [BsonElement("locationType")]
+    [BsonField("locationType")]
     public string LocationType { get; set; } = "office"; // home, office, travel, other
 
-    [BsonElement("tableNumber")]
+    [BsonField("tableNumber")]
     public string? TableNumber { get; set; }
 
-    [BsonElement("startTime")]
+    [BsonField("startTime")]
     public string? StartTime { get; set; }
 
-    [BsonElement("endTime")]
+    [BsonField("endTime")]
     public string? EndTime { get; set; }
 
-    [BsonElement("notes")]
+    [BsonField("notes")]
     public string? Notes { get; set; }
 
-    [BsonElement("status")]
+    [BsonField("status")]
     public string Status { get; set; } = "plan";
 }

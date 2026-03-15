@@ -1,42 +1,42 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 
 namespace AllTrackIn.Api.Models;
 
 public class BookEntry : BaseDocument
 {
-    [BsonElement("title")]
+    [BsonField("title")]
     public string Title { get; set; } = string.Empty;
 
-    [BsonElement("author")]
+    [BsonField("author")]
     public string? Author { get; set; }
 
-    [BsonElement("genre")]
+    [BsonField("genre")]
     public string? Genre { get; set; }
 
-    [BsonElement("status")]
+    [BsonField("status")]
     public string Status { get; set; } = "wishlist"; // reading, finished, paused, wishlist
 
-    [BsonElement("listType")]
+    [BsonField("listType")]
     public string? ListType { get; set; } // reading, wishlist
 
-    [BsonElement("startDate")]
+    [BsonField("startDate")]
     public string? StartDate { get; set; }
 
-    [BsonElement("endDate")]
+    [BsonField("endDate")]
     public string? EndDate { get; set; }
 
-    [BsonElement("rating")]
+    [BsonField("rating")]
     public int? Rating { get; set; }
 
-    [BsonElement("notes")]
+    [BsonField("notes")]
     public string? Notes { get; set; }
 
-    [BsonElement("borrowType")]
+    [BsonField("borrowType")]
     public string? BorrowType { get; set; } // borrowed_from, lent_to
 
-    [BsonElement("borrowPerson")]
+    [BsonField("borrowPerson")]
     public string? BorrowPerson { get; set; }
 
-    [BsonElement("borrowDate")]
+    [BsonField("borrowDate")]
     public string? BorrowDate { get; set; }
 }
