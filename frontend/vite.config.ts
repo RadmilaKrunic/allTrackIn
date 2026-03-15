@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  base: "/app/",
   plugins: [
     react(),
     VitePWA({
@@ -16,8 +17,8 @@ export default defineConfig({
         background_color: "#FDF8FC",
         display: "standalone",
         orientation: "portrait-primary",
-        scope: "/",
-        start_url: "/",
+        scope: "/app/",
+        start_url: "/app/",
         icons: [
           {
             src: "/icons/icon-192.png",
@@ -46,7 +47,11 @@ export default defineConfig({
   server: {
     port: 5174,
     proxy: {
-      '/api': { target: 'https://localhost:59882', changeOrigin: true, secure: false },
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

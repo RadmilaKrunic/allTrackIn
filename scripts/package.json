@@ -1,0 +1,9 @@
+{
+  "name": "alltrack-in-scripts",
+  "version": "1.0.0",
+  "description": "Utility scripts for AllTrackIn",
+  "private": true,
+  "dependencies": {
+    "mongodb": "^6.0.0"
+  }
+}

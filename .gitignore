@@ -18,4 +18,10 @@ frontend/.env.test
 frontend/.env.local
 frontend/.env.production.local
 frontend/.env.development.local
-frontend/.env.test.local        
+frontend/.env.test.local   
+backend-dotnet-net22/bin/
+backend-dotnet-net22/obj/
+backend-dotnet-net22/.vs/  
+.vs/   
+backend-dotnet-net22/AllTrackIn.Api.csproj.user
+backend-dotnet-net22/Properties/PublishProfiles/FolderProfile.pubxml.user
