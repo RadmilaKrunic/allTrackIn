@@ -31,11 +31,11 @@ namespace AllTrackIn.Api
         public void ConfigureServices(IServiceCollection services)
         {
             // ─── Configuration ───────────────────────────────────────────────
-            services.Configure<MongoDbSettings>(Configuration.GetSection("MongoDB"));
+            services.Configure<LiteDbSettings>(Configuration.GetSection("LiteDb"));
             services.Configure<JwtSettings>(Configuration.GetSection("Jwt"));
 
-            // ─── MongoDB ─────────────────────────────────────────────────────
-            services.AddSingleton<MongoDbContext>();
+            // ─── LiteDB ──────────────────────────────────────────────────────
+            services.AddSingleton<LiteDbContext>();
 
             // ─── JWT Authentication ──────────────────────────────────────────
             var jwtSecret = Configuration["Jwt:Secret"]

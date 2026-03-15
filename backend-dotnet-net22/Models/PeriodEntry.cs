@@ -1,41 +1,38 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 using System.Collections.Generic;
 
 namespace AllTrackIn.Api.Models
 {
     public class PeriodEntry : BaseDocument
     {
-        [BsonElement("startDate")]
+        [BsonField("startDate")]
         public string StartDate { get; set; } = string.Empty;
 
-        [BsonElement("endDate")]
+        [BsonField("endDate")]
         public string EndDate { get; set; }
 
-        [BsonElement("bleedingDays")]
+        [BsonField("bleedingDays")]
         public int? BleedingDays { get; set; }
 
-        [BsonElement("symptoms")]
+        [BsonField("symptoms")]
         public List<string> Symptoms { get; set; }
 
-        [BsonElement("mood")]
+        [BsonField("mood")]
         public string Mood { get; set; }
 
-        [BsonElement("notes")]
+        [BsonField("notes")]
         public string Notes { get; set; }
     }
 
     public class PeriodSettings : BaseDocument
     {
-        [BsonElement("type")]
-        public string Type { get; set; } = "period_settings";
-
-        [BsonElement("averageCycleLength")]
+        [BsonField("averageCycleLength")]
         public int AverageCycleLength { get; set; } = 28;
 
-        [BsonElement("averageBleedingDays")]
+        [BsonField("averageBleedingDays")]
         public int AverageBleedingDays { get; set; } = 5;
 
-        [BsonElement("lastPeriodStart")]
+        [BsonField("lastPeriodStart")]
         public string LastPeriodStart { get; set; }
     }
 }

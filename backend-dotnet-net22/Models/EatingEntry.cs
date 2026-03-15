@@ -1,50 +1,50 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 using System.Collections.Generic;
 
 namespace AllTrackIn.Api.Models
 {
     public class Meal
     {
-        [BsonElement("name")]
+        [BsonField("name")]
         public string Name { get; set; } = string.Empty;
 
-        [BsonElement("time")]
+        [BsonField("time")]
         public string Time { get; set; }
 
-        [BsonElement("notes")]
+        [BsonField("notes")]
         public string Notes { get; set; }
     }
 
     public class EatingEntry : BaseDocument
     {
-        [BsonElement("entryType")]
+        [BsonField("entryType")]
         public string EntryType { get; set; } = "daily_log";
 
-        [BsonElement("date")]
+        [BsonField("date")]
         public string Date { get; set; }
 
-        [BsonElement("status")]
+        [BsonField("status")]
         public string Status { get; set; }
 
-        [BsonElement("categories")]
+        [BsonField("categories")]
         public List<string> Categories { get; set; }
 
-        [BsonElement("meals")]
+        [BsonField("meals")]
         public List<Meal> Meals { get; set; }
 
-        [BsonElement("notes")]
+        [BsonField("notes")]
         public string Notes { get; set; }
 
-        [BsonElement("name")]
+        [BsonField("name")]
         public string Name { get; set; }
 
-        [BsonElement("ingredients")]
+        [BsonField("ingredients")]
         public List<string> Ingredients { get; set; }
 
-        [BsonElement("instructions")]
+        [BsonField("instructions")]
         public string Instructions { get; set; }
 
-        [BsonElement("tags")]
+        [BsonField("tags")]
         public List<string> Tags { get; set; }
     }
 }

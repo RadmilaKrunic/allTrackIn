@@ -1,33 +1,33 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 
 namespace AllTrackIn.Api.Models;
 
 public class HabitDefinition : BaseDocument
 {
-    [BsonElement("name")]
+    [BsonField("name")]
     public string Name { get; set; } = string.Empty;
 
-    [BsonElement("icon")]
+    [BsonField("icon")]
     public string? Icon { get; set; }
 
-    [BsonElement("color")]
+    [BsonField("color")]
     public string? Color { get; set; }
 
-    [BsonElement("active")]
+    [BsonField("active")]
     public bool Active { get; set; } = true;
 
-    [BsonElement("order")]
+    [BsonField("order")]
     public int? Order { get; set; }
 }
 
 public class HabitLog : BaseDocument
 {
-    [BsonElement("date")]
+    [BsonField("date")]
     public string Date { get; set; } = string.Empty; // yyyy-MM-dd
 
-    [BsonElement("habitId")]
+    [BsonField("habitId")]
     public string HabitId { get; set; } = string.Empty;
 
-    [BsonElement("done")]
+    [BsonField("done")]
     public bool Done { get; set; }
 }

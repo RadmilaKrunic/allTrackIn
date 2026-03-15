@@ -1,67 +1,46 @@
 using AllTrackIn.Api.Models;
-using MongoDB.Driver;
+using LiteDB;
+using System.Linq.Expressions;
 
 namespace AllTrackIn.Api.Services;
 
 public class BaseService<T> where T : BaseDocument
 {
-    public readonly IMongoCollection<T> Collection;
+    public readonly ILiteCollection<T> Collection;
 
-    public BaseService(IMongoCollection<T> collection)
+    public BaseService(ILiteCollection<T> collection)
     {
         Collection = collection;
     }
 
-    public async Task<List<T>> FindAllAsync(FilterDefinition<T> filter, SortDefinition<T>? sort = null, int? limit = null, int? skip = null)
-    {
-        var findOptions = new FindOptions<T>
-        {
-            Sort = sort,
-            Limit = limit,
-            Skip = skip
-        };
-        var cursor = await Collection.FindAsync(filter, findOptions);
-        return await cursor.ToListAsync();
-    }
+    public List<T> FindAll(Expression<Func<T, bool>>? predicate = null)
+        => predicate is null ? Collection.FindAll().ToList() : Collection.Find(predicate).ToList();
 
-    public async Task<T?> FindOneAsync(FilterDefinition<T> filter)
-    {
-        var cursor = await Collection.FindAsync(filter);
-        return await cursor.FirstOrDefaultAsync();
-    }
+    public T? FindOne(Expression<Func<T, bool>> predicate)
+        => Collection.FindOne(predicate);
 
-    public async Task<T?> FindByIdAsync(string id)
-    {
-        var filter = Builders<T>.Filter.Eq("_id", MongoDB.Bson.ObjectId.Parse(id));
-        var cursor = await Collection.FindAsync(filter);
-        return await cursor.FirstOrDefaultAsync();
-    }
+    public T? FindById(string id)
+        => Collection.FindOne(x => x.Id == id);
 
-    public async Task<T> CreateAsync(T document)
+    public T Create(T document)
     {
+        document.Id = ObjectId.NewObjectId().ToString();
         document.CreatedAt = DateTime.UtcNow;
         document.UpdatedAt = DateTime.UtcNow;
-        await Collection.InsertOneAsync(document);
+        Collection.Insert(document);
         return document;
     }
 
-    public async Task<T?> UpdateAsync(string id, UpdateDefinition<T> update)
+    public T Update(T document)
     {
-        var filter = Builders<T>.Filter.Eq("_id", MongoDB.Bson.ObjectId.Parse(id));
-        var finalUpdate = Builders<T>.Update.Combine(update, Builders<T>.Update.Set(d => d.UpdatedAt, DateTime.UtcNow));
-        await Collection.UpdateOneAsync(filter, finalUpdate);
-        return await FindByIdAsync(id);
+        document.UpdatedAt = DateTime.UtcNow;
+        Collection.Update(document);
+        return document;
     }
 
-    public async Task<long> DeleteAsync(string id)
-    {
-        var filter = Builders<T>.Filter.Eq("_id", MongoDB.Bson.ObjectId.Parse(id));
-        var result = await Collection.DeleteOneAsync(filter);
-        return result.DeletedCount;
-    }
+    public bool Delete(string id)
+        => Collection.DeleteMany(x => x.Id == id) > 0;
 
-    public async Task<long> CountAsync(FilterDefinition<T> filter)
-    {
-        return await Collection.CountDocumentsAsync(filter);
-    }
+    public int Count(Expression<Func<T, bool>> predicate)
+        => Collection.Count(predicate);
 }

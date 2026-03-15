@@ -1,9 +1,9 @@
 using AllTrackIn.Api.Extensions;
 using AllTrackIn.Api.Models;
 using AllTrackIn.Api.Services;
+using LiteDB;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 namespace AllTrackIn.Api.Controllers;
 
@@ -12,168 +12,128 @@ namespace AllTrackIn.Api.Controllers;
 [Authorize]
 public class SettingsController : ControllerBase
 {
-    private readonly MongoDbContext _db;
+    private readonly LiteDbContext _db;
 
-    public SettingsController(MongoDbContext db)
-    {
-        _db = db;
-    }
-
-    // ─── Preferences ───────────────────────────────────────────────────────────
+    public SettingsController(LiteDbContext db) => _db = db;
 
     [HttpGet("preferences")]
-    public async Task<IActionResult> GetPreferences()
+    public IActionResult GetPreferences()
     {
         var uid = User.GetUserId();
-        var filter = Builders<Preferences>.Filter.Eq(e => e.UserId, uid)
-            & Builders<Preferences>.Filter.Eq(e => e.Type, "preferences");
-        var prefs = await (await _db.Preferences.FindAsync(filter)).FirstOrDefaultAsync();
+        var prefs = _db.Preferences.FindOne(e => e.UserId == uid);
         return Ok(prefs ?? new Preferences { UserId = uid });
     }
 
     [HttpPut("preferences")]
-    public async Task<IActionResult> UpsertPreferences([FromBody] Preferences prefs)
+    public IActionResult UpsertPreferences([FromBody] Preferences prefs)
     {
         var uid = User.GetUserId();
-        var filter = Builders<Preferences>.Filter.Eq(e => e.UserId, uid)
-            & Builders<Preferences>.Filter.Eq(e => e.Type, "preferences");
-
-        var existing = await (await _db.Preferences.FindAsync(filter)).FirstOrDefaultAsync();
+        var existing = _db.Preferences.FindOne(e => e.UserId == uid);
         prefs.UserId = uid;
-        prefs.Type = "preferences";
-
         if (existing == null)
         {
-            prefs.Id = null;
+            prefs.Id = ObjectId.NewObjectId().ToString();
             prefs.CreatedAt = DateTime.UtcNow;
             prefs.UpdatedAt = DateTime.UtcNow;
-            await _db.Preferences.InsertOneAsync(prefs);
+            _db.Preferences.Insert(prefs);
         }
         else
         {
-            var update = Builders<Preferences>.Update
-                .Set(e => e.Theme, prefs.Theme)
-                .Set(e => e.EnabledModules, prefs.EnabledModules)
-                .Set(e => e.UpdatedAt, DateTime.UtcNow);
-            await _db.Preferences.UpdateOneAsync(filter, update);
-            prefs.Id = existing.Id;
+            existing.Theme = prefs.Theme;
+            existing.EnabledModules = prefs.EnabledModules;
+            existing.UpdatedAt = DateTime.UtcNow;
+            _db.Preferences.Update(existing);
+            prefs = existing;
         }
         return Ok(prefs);
     }
 
-    // ─── Categories ────────────────────────────────────────────────────────────
-
     [HttpGet("categories")]
-    public async Task<IActionResult> GetCategories([FromQuery] string? module)
+    public IActionResult GetCategories([FromQuery] string? module)
     {
         var uid = User.GetUserId();
-        var filter = Builders<Category>.Filter.Eq(e => e.UserId, uid)
-            & Builders<Category>.Filter.Eq(e => e.Type, "category");
-        if (!string.IsNullOrEmpty(module))
-            filter &= Builders<Category>.Filter.Eq(e => e.Module, module);
-
-        var sort = Builders<Category>.Sort.Ascending(e => e.Name);
-        var result = await (await _db.Categories.FindAsync(filter, new FindOptions<Category> { Sort = sort })).ToListAsync();
+        var result = _db.Categories.Find(e => e.UserId == uid
+            && (string.IsNullOrEmpty(module) || e.Module == module))
+            .OrderBy(e => e.Name).ToList();
         return Ok(result);
     }
 
     [HttpPost("categories")]
-    public async Task<IActionResult> CreateCategory([FromBody] Category category)
+    public IActionResult CreateCategory([FromBody] Category category)
     {
         category.UserId = User.GetUserId();
-        category.Id = null;
-        category.Type = "category";
+        category.Id = ObjectId.NewObjectId().ToString();
         category.CreatedAt = DateTime.UtcNow;
         category.UpdatedAt = DateTime.UtcNow;
-        await _db.Categories.InsertOneAsync(category);
+        _db.Categories.Insert(category);
         return StatusCode(201, category);
     }
 
     [HttpPut("categories/{id}")]
-    public async Task<IActionResult> UpdateCategory(string id, [FromBody] Category category)
+    public IActionResult UpdateCategory(string id, [FromBody] Category category)
     {
         var uid = User.GetUserId();
-        var filter = Builders<Category>.Filter.Eq("_id", MongoDB.Bson.ObjectId.Parse(id))
-            & Builders<Category>.Filter.Eq(e => e.UserId, uid);
-
-        var update = Builders<Category>.Update
-            .Set(e => e.Module, category.Module)
-            .Set(e => e.Name, category.Name)
-            .Set(e => e.Color, category.Color)
-            .Set(e => e.Icon, category.Icon)
-            .Set(e => e.UpdatedAt, DateTime.UtcNow);
-
-        var result = await _db.Categories.UpdateOneAsync(filter, update);
-        if (result.MatchedCount == 0) return NotFound();
-
-        var updated = await (await _db.Categories.FindAsync(
-            Builders<Category>.Filter.Eq("_id", MongoDB.Bson.ObjectId.Parse(id)))).FirstOrDefaultAsync();
-        return Ok(updated);
+        var existing = _db.Categories.FindOne(e => e.Id == id && e.UserId == uid);
+        if (existing == null) return NotFound();
+        existing.Module = category.Module;
+        existing.Name = category.Name;
+        existing.Color = category.Color;
+        existing.Icon = category.Icon;
+        existing.UpdatedAt = DateTime.UtcNow;
+        _db.Categories.Update(existing);
+        return Ok(existing);
     }
 
     [HttpDelete("categories/{id}")]
-    public async Task<IActionResult> DeleteCategory(string id)
+    public IActionResult DeleteCategory(string id)
     {
         var uid = User.GetUserId();
-        var filter = Builders<Category>.Filter.Eq("_id", MongoDB.Bson.ObjectId.Parse(id))
-            & Builders<Category>.Filter.Eq(e => e.UserId, uid);
-        var result = await _db.Categories.DeleteOneAsync(filter);
-        if (result.DeletedCount == 0) return NotFound();
+        var existing = _db.Categories.FindOne(e => e.Id == id && e.UserId == uid);
+        if (existing == null) return NotFound();
+        _db.Categories.Delete(existing.Id);
         return NoContent();
     }
 
-    // ─── Quotes ────────────────────────────────────────────────────────────────
-
     [HttpGet("quotes")]
-    public async Task<IActionResult> GetQuotes()
+    public IActionResult GetQuotes()
     {
         var uid = User.GetUserId();
-        var filter = Builders<Quote>.Filter.Eq(e => e.UserId, uid);
-        var sort = Builders<Quote>.Sort.Descending(e => e.CreatedAt);
-        var result = await (await _db.Quotes.FindAsync(filter, new FindOptions<Quote> { Sort = sort })).ToListAsync();
+        var result = _db.Quotes.Find(e => e.UserId == uid).OrderByDescending(e => e.CreatedAt).ToList();
         return Ok(result);
     }
 
     [HttpPost("quotes")]
-    public async Task<IActionResult> CreateQuote([FromBody] Quote quote)
+    public IActionResult CreateQuote([FromBody] Quote quote)
     {
         quote.UserId = User.GetUserId();
-        quote.Id = null;
+        quote.Id = ObjectId.NewObjectId().ToString();
         quote.CreatedAt = DateTime.UtcNow;
         quote.UpdatedAt = DateTime.UtcNow;
-        await _db.Quotes.InsertOneAsync(quote);
+        _db.Quotes.Insert(quote);
         return StatusCode(201, quote);
     }
 
     [HttpPut("quotes/{id}")]
-    public async Task<IActionResult> UpdateQuote(string id, [FromBody] Quote quote)
+    public IActionResult UpdateQuote(string id, [FromBody] Quote quote)
     {
         var uid = User.GetUserId();
-        var filter = Builders<Quote>.Filter.Eq("_id", MongoDB.Bson.ObjectId.Parse(id))
-            & Builders<Quote>.Filter.Eq(e => e.UserId, uid);
-
-        var update = Builders<Quote>.Update
-            .Set(e => e.Text, quote.Text)
-            .Set(e => e.Author, quote.Author)
-            .Set(e => e.Active, quote.Active)
-            .Set(e => e.UpdatedAt, DateTime.UtcNow);
-
-        var result = await _db.Quotes.UpdateOneAsync(filter, update);
-        if (result.MatchedCount == 0) return NotFound();
-
-        var updated = await (await _db.Quotes.FindAsync(
-            Builders<Quote>.Filter.Eq("_id", MongoDB.Bson.ObjectId.Parse(id)))).FirstOrDefaultAsync();
-        return Ok(updated);
+        var existing = _db.Quotes.FindOne(e => e.Id == id && e.UserId == uid);
+        if (existing == null) return NotFound();
+        existing.Text = quote.Text;
+        existing.Author = quote.Author;
+        existing.Active = quote.Active;
+        existing.UpdatedAt = DateTime.UtcNow;
+        _db.Quotes.Update(existing);
+        return Ok(existing);
     }
 
     [HttpDelete("quotes/{id}")]
-    public async Task<IActionResult> DeleteQuote(string id)
+    public IActionResult DeleteQuote(string id)
     {
         var uid = User.GetUserId();
-        var filter = Builders<Quote>.Filter.Eq("_id", MongoDB.Bson.ObjectId.Parse(id))
-            & Builders<Quote>.Filter.Eq(e => e.UserId, uid);
-        var result = await _db.Quotes.DeleteOneAsync(filter);
-        if (result.DeletedCount == 0) return NotFound();
+        var existing = _db.Quotes.FindOne(e => e.Id == id && e.UserId == uid);
+        if (existing == null) return NotFound();
+        _db.Quotes.Delete(existing.Id);
         return NoContent();
     }
 }

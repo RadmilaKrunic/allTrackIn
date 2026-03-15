@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using MongoDB.Driver;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -20,23 +19,23 @@ public class AuthController : ControllerBase
     private readonly BaseService<User> _users;
     private readonly JwtSettings _jwt;
 
-    public AuthController(MongoDbContext db, IOptions<JwtSettings> jwt)
+    public AuthController(LiteDbContext db, IOptions<JwtSettings> jwt)
     {
         _users = new BaseService<User>(db.Users);
         _jwt = jwt.Value;
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest req)
+    public IActionResult Register([FromBody] RegisterRequest req)
     {
         if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password) || string.IsNullOrWhiteSpace(req.Name))
             return BadRequest(new { error = "Email, name and password are required" });
 
         var email = req.Email.Trim().ToLowerInvariant();
-        var existing = await _users.FindOneAsync(Builders<User>.Filter.Eq(u => u.Email, email));
-        if (existing != null) return Conflict(new { error = "Email already registered" });
+        if (_users.FindOne(u => u.Email == email) != null)
+            return Conflict(new { error = "Email already registered" });
 
-        var user = await _users.CreateAsync(new User
+        var user = _users.Create(new User
         {
             Email = email,
             Name = req.Name.Trim(),
@@ -48,13 +47,13 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest req)
+    public IActionResult Login([FromBody] LoginRequest req)
     {
         if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
             return BadRequest(new { error = "Email and password are required" });
 
         var email = req.Email.Trim().ToLowerInvariant();
-        var user = await _users.FindOneAsync(Builders<User>.Filter.Eq(u => u.Email, email));
+        var user = _users.FindOne(u => u.Email == email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
             return Unauthorized(new { error = "Invalid email or password" });
 
@@ -64,10 +63,10 @@ public class AuthController : ControllerBase
 
     [HttpGet("me")]
     [Authorize]
-    public async Task<IActionResult> Me()
+    public IActionResult Me()
     {
         var userId = User.GetUserId();
-        var user = await _users.FindByIdAsync(userId);
+        var user = _users.FindById(userId);
         if (user == null) return NotFound(new { error = "User not found" });
         return Ok(new { id = user.Id, user.Email, user.Name });
     }
@@ -76,19 +75,16 @@ public class AuthController : ControllerBase
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id!),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.Name),
         };
-
         var token = new JwtSecurityToken(
             claims: claims,
             expires: DateTime.UtcNow.AddDays(_jwt.ExpiryDays),
             signingCredentials: creds);
-
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

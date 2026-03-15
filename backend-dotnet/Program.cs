@@ -9,11 +9,11 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // ─── Configuration ──────────────────────────────────────────────────────────
-builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDB"));
+builder.Services.Configure<LiteDbSettings>(builder.Configuration.GetSection("LiteDb"));
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
-// ─── MongoDB ────────────────────────────────────────────────────────────────
-builder.Services.AddSingleton<MongoDbContext>();
+// ─── LiteDB ─────────────────────────────────────────────────────────────────
+builder.Services.AddSingleton<LiteDbContext>();
 
 // ─── JWT Authentication ──────────────────────────────────────────────────────
 var jwtSecret = builder.Configuration["Jwt:Secret"]

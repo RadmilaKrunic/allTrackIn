@@ -1,84 +1,77 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 using System.Collections.Generic;
 
 namespace AllTrackIn.Api.Models
 {
-    public enum SpendingEntryType { Transaction, Fixed, Product, Cart }
-    public enum TransactionType { Expense, Income, Saving }
-    public enum SpendingFrequency { Daily, Weekly, Monthly, Yearly }
-
     public class CartItem
     {
-        [BsonElement("productId")]
+        [BsonField("productId")]
         public string ProductId { get; set; } = string.Empty;
 
-        [BsonElement("name")]
+        [BsonField("name")]
         public string Name { get; set; } = string.Empty;
 
-        [BsonElement("price")]
+        [BsonField("price")]
         public decimal? Price { get; set; }
 
-        [BsonElement("unit")]
+        [BsonField("unit")]
         public string Unit { get; set; }
 
-        [BsonElement("category")]
+        [BsonField("category")]
         public string Category { get; set; } = string.Empty;
 
-        [BsonElement("checked")]
+        [BsonField("checked")]
         public bool Checked { get; set; }
     }
 
     public class SpendingEntry : BaseDocument
     {
-        [BsonElement("entryType")]
-        [BsonRepresentation(MongoDB.Bson.BsonType.String)]
-        public SpendingEntryType EntryType { get; set; }
+        [BsonField("entryType")]
+        public string EntryType { get; set; }
 
-        [BsonElement("date")]
+        [BsonField("date")]
         public string Date { get; set; }
 
-        [BsonElement("amount")]
+        [BsonField("amount")]
         public decimal Amount { get; set; }
 
-        [BsonElement("category")]
+        [BsonField("category")]
         public string Category { get; set; } = string.Empty;
 
-        [BsonElement("description")]
+        [BsonField("description")]
         public string Description { get; set; }
 
-        [BsonElement("transactionType")]
-        [BsonRepresentation(MongoDB.Bson.BsonType.String)]
-        public TransactionType? TransactionType { get; set; }
+        [BsonField("transactionType")]
+        public string TransactionType { get; set; }
 
-        [BsonElement("dayOfMonth")]
+        [BsonField("dayOfMonth")]
         public int? DayOfMonth { get; set; }
 
-        [BsonElement("dayOfWeek")]
+        [BsonField("dayOfWeek")]
         public int? DayOfWeek { get; set; }
 
-        [BsonElement("frequency")]
-        [BsonRepresentation(MongoDB.Bson.BsonType.String)]
-        public SpendingFrequency? Frequency { get; set; }
+        [BsonField("frequency")]
+        public string Frequency { get; set; }
 
-        [BsonElement("recurring")]
+        [BsonField("recurring")]
         public bool? Recurring { get; set; }
 
-        [BsonElement("name")]
+        [BsonField("name")]
         public string Name { get; set; }
 
-        [BsonElement("price")]
+        [BsonField("price")]
         public decimal? Price { get; set; }
 
-        [BsonElement("unit")]
+        [BsonField("unit")]
         public string Unit { get; set; }
 
-        [BsonElement("cartItems")]
+        [BsonField("cartItems")]
         public List<CartItem> CartItems { get; set; }
 
-        [BsonElement("estimatedTotal")]
+        [BsonField("estimatedTotal")]
         public decimal? EstimatedTotal { get; set; }
 
-        [BsonElement("status")]
+        [BsonField("status")]
         public string Status { get; set; } = "plan";
     }
 }

@@ -1,36 +1,36 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 
 namespace AllTrackIn.Api.Models;
 
 public class EventEntry : BaseDocument
 {
-    [BsonElement("name")]
+    [BsonField("name")]
     public string Name { get; set; } = string.Empty;
 
-    [BsonElement("date")]
+    [BsonField("date")]
     public string Date { get; set; } = string.Empty;
 
-    [BsonElement("time")]
+    [BsonField("time")]
     public string? Time { get; set; }
 
-    [BsonElement("endDate")]
+    [BsonField("endDate")]
     public string? EndDate { get; set; }
 
-    [BsonElement("eventType")]
+    [BsonField("eventType")]
     public string EventType { get; set; } = "other"; // birthday, vacation, appointment, reminder, holiday, other
 
-    [BsonElement("description")]
+    [BsonField("description")]
     public string? Description { get; set; }
 
-    [BsonElement("location")]
+    [BsonField("location")]
     public string? Location { get; set; }
 
-    [BsonElement("recurring")]
+    [BsonField("recurring")]
     public bool? Recurring { get; set; }
 
-    [BsonElement("status")]
+    [BsonField("status")]
     public string Status { get; set; } = "plan";
 
-    [BsonElement("color")]
+    [BsonField("color")]
     public string? Color { get; set; }
 }

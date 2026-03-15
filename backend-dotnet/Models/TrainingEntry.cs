@@ -1,51 +1,51 @@
-using MongoDB.Bson.Serialization.Attributes;
+using LiteDB;
 
 namespace AllTrackIn.Api.Models;
 
 public class GymExercise
 {
-    [BsonElement("name")]
+    [BsonField("name")]
     public string Name { get; set; } = string.Empty;
 
-    [BsonElement("sets")]
+    [BsonField("sets")]
     public int? Sets { get; set; }
 
-    [BsonElement("reps")]
+    [BsonField("reps")]
     public int? Reps { get; set; }
 
-    [BsonElement("weight")]
+    [BsonField("weight")]
     public double? Weight { get; set; }
 }
 
 public class TrainingEntry : BaseDocument
 {
-    [BsonElement("date")]
+    [BsonField("date")]
     public string Date { get; set; } = string.Empty;
 
-    [BsonElement("activityType")]
+    [BsonField("activityType")]
     public string ActivityType { get; set; } = string.Empty; // running, walking, gym, cycling, yoga, swimming, other
 
-    [BsonElement("status")]
+    [BsonField("status")]
     public string Status { get; set; } = "plan";
 
-    [BsonElement("duration")]
+    [BsonField("duration")]
     public int? Duration { get; set; } // minutes
 
-    [BsonElement("notes")]
+    [BsonField("notes")]
     public string? Notes { get; set; }
 
-    [BsonElement("distance")]
+    [BsonField("distance")]
     public double? Distance { get; set; } // km
 
-    [BsonElement("pace")]
+    [BsonField("pace")]
     public string? Pace { get; set; } // min/km
 
-    [BsonElement("workoutType")]
+    [BsonField("workoutType")]
     public string? WorkoutType { get; set; }
 
-    [BsonElement("exercises")]
+    [BsonField("exercises")]
     public List<GymExercise>? Exercises { get; set; }
 
-    [BsonElement("properties")]
+    [BsonField("properties")]
     public Dictionary<string, object>? Properties { get; set; }
 }

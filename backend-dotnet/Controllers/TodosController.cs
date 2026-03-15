@@ -3,7 +3,6 @@ using AllTrackIn.Api.Models;
 using AllTrackIn.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 namespace AllTrackIn.Api.Controllers;
 
@@ -14,74 +13,60 @@ public class TodosController : ControllerBase
 {
     private readonly BaseService<TodoEntry> _service;
 
-    public TodosController(MongoDbContext db)
+    public TodosController(LiteDbContext db)
     {
         _service = new BaseService<TodoEntry>(db.Todos);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? date)
+    public IActionResult GetAll([FromQuery] string? date)
     {
         var uid = User.GetUserId();
-        var filter = Builders<TodoEntry>.Filter.Eq(e => e.UserId, uid);
-
-        if (!string.IsNullOrEmpty(date))
-            filter &= Builders<TodoEntry>.Filter.Eq(e => e.Date, date);
-
-        var sort = Builders<TodoEntry>.Sort.Descending(e => e.Date);
-        var result = await _service.FindAllAsync(filter, sort);
+        var result = _service.FindAll(e => e.UserId == uid && (string.IsNullOrEmpty(date) || e.Date == date))
+            .OrderByDescending(e => e.Date).ToList();
         return Ok(result);
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetOne(string id)
+    public IActionResult GetOne(string id)
     {
         var uid = User.GetUserId();
-        var entry = await _service.FindByIdAsync(id);
+        var entry = _service.FindById(id);
         if (entry == null || entry.UserId != uid) return NotFound();
         return Ok(entry);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] TodoEntry entry)
+    public IActionResult Create([FromBody] TodoEntry entry)
     {
         entry.UserId = User.GetUserId();
         entry.Id = null;
-        // Ensure each item has an ID
         foreach (var item in entry.Items)
             if (string.IsNullOrEmpty(item.Id)) item.Id = Guid.NewGuid().ToString();
-
-        var created = await _service.CreateAsync(entry);
-        return StatusCode(201, created);
+        return StatusCode(201, _service.Create(entry));
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(string id, [FromBody] TodoEntry entry)
+    public IActionResult Update(string id, [FromBody] TodoEntry entry)
     {
         var uid = User.GetUserId();
-        var existing = await _service.FindByIdAsync(id);
+        var existing = _service.FindById(id);
         if (existing == null || existing.UserId != uid) return NotFound();
-
-        // Ensure each item has an ID
         foreach (var item in entry.Items)
             if (string.IsNullOrEmpty(item.Id)) item.Id = Guid.NewGuid().ToString();
-
-        var update = Builders<TodoEntry>.Update
-            .Set(e => e.Title, entry.Title)
-            .Set(e => e.Date, entry.Date)
-            .Set(e => e.Items, entry.Items);
-
-        var updated = await _service.UpdateAsync(id, update);
-        return Ok(updated);
+        existing.Title = entry.Title;
+        existing.Date = entry.Date;
+        existing.Items = entry.Items;
+        return Ok(_service.Update(existing));
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(string id)
+    public IActionResult Delete(string id)
     {
         var uid = User.GetUserId();
-        var existing = await _service.FindByIdAsync(id);
+        var existing = _service.FindById(id);
         if (existing == null || existing.UserId != uid) return NotFound();
-        await _service.DeleteAsync(id);
+        _service.Delete(id);
         return NoContent();
     }
 }
