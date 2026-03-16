@@ -332,7 +332,7 @@ export default function TodoPage() {
   return (
     <div className="page-content">
       {/* Header */}
-      <div style={{ background: C.soft, border: `1px solid ${C.primary}30`, borderRadius: 'var(--radius-xl)', padding: '1.5rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+      <div style={{ background: C.primary + '1A', border: `1px solid ${C.primary}30`, borderRadius: 'var(--radius-xl)', padding: '1.5rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <span style={{ fontSize: '2.5rem' }}>✅</span>
           <div>

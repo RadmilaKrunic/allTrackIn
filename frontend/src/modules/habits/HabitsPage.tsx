@@ -171,7 +171,7 @@ export default function HabitsPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {/* Header */}
       <div style={{
-        background: COLOR.soft, borderRadius: 'var(--radius-lg)',
+        background: COLOR.primary + '1A', borderRadius: 'var(--radius-lg)',
         padding: '1.25rem 1.5rem',
         border: `1px solid ${COLOR.primary}30`,
       }}>

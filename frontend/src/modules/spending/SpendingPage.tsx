@@ -1501,7 +1501,7 @@ export default function SpendingPage() {
     <div className="page-content">
       {/* Header strip */}
       <div style={{
-        background: COLOR.soft,
+        background: COLOR.primary + '1A',
         border: `1px solid ${COLOR.primary}30`,
         borderRadius: 'var(--radius-lg)',
         padding: '1.5rem',
