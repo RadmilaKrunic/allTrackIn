@@ -3,6 +3,8 @@ using AllTrackIn.Api.Models;
 using AllTrackIn.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace AllTrackIn.Api.Controllers
@@ -60,6 +62,62 @@ namespace AllTrackIn.Api.Controllers
                 settings.Id = existing.Id;
             }
             return Ok(settings);
+        }
+
+        [HttpGet("predictions")]
+        public IActionResult GetPredictions()
+        {
+            var uid = User.GetUserId();
+            var settings = _settingsService.FindOne(e => e.UserId == uid);
+            var cycleLength = settings?.AverageCycleLength ?? 28;
+            var bleedingDays = settings?.AverageBleedingDays ?? 5;
+
+            var entries = _periodService.FindAll(e => e.UserId == uid && e.StartDate != null)
+                .OrderByDescending(e => e.StartDate)
+                .Take(6)
+                .ToList();
+
+            var avgCycle = cycleLength;
+            if (entries.Count >= 2)
+            {
+                var sorted = entries.OrderBy(e => e.StartDate).ToList();
+                var totalDays = 0;
+                var count = 0;
+                for (var i = 1; i < sorted.Count; i++)
+                {
+                    var prev = DateTime.Parse(sorted[i - 1].StartDate);
+                    var curr = DateTime.Parse(sorted[i].StartDate);
+                    var diff = (int)Math.Round((curr - prev).TotalDays);
+                    if (diff > 15 && diff < 60) { totalDays += diff; count++; }
+                }
+                if (count > 0) avgCycle = (int)Math.Round((double)totalDays / count);
+            }
+
+            var lastStart = entries.FirstOrDefault()?.StartDate ?? settings?.LastPeriodStart;
+
+            var predictions = new List<object>();
+            if (lastStart != null)
+            {
+                for (var i = 1; i <= 3; i++)
+                {
+                    var start = DateTime.Parse(lastStart).AddDays(avgCycle * i);
+                    var end = start.AddDays(bleedingDays - 1);
+                    predictions.Add(new
+                    {
+                        startDate = start.ToString("yyyy-MM-dd"),
+                        endDate = end.ToString("yyyy-MM-dd"),
+                        cycleNumber = i
+                    });
+                }
+            }
+
+            return Ok(new
+            {
+                averageCycleLength = avgCycle,
+                averageBleedingDays = bleedingDays,
+                lastPeriodStart = lastStart,
+                predictions
+            });
         }
 
         [HttpGet("{id}")]
