@@ -1350,16 +1350,16 @@ function CartTab() {
 // ─── Calendar Tab ─────────────────────────────────────────────────────────────
 
 function CalendarTab() {
-  const [calMonth, setCalMonth] = useState(new Date());
+  const [statsMonth, setStatsMonth] = useState(new Date());
 
   const { data: transactions = [] } = useQuery({
     queryKey: ['spending', 'transactions'],
     queryFn: () => spendingApi.getTransactions(),
   });
 
-  const monthStr = format(calMonth, 'yyyy-MM');
-  const monthStart = startOfMonth(calMonth);
-  const monthEnd = endOfMonth(calMonth);
+  const monthStr = format(statsMonth, 'yyyy-MM');
+  const monthStart = startOfMonth(statsMonth);
+  const monthEnd = endOfMonth(statsMonth);
   const calDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const firstDow = getDay(monthStart);
 
@@ -1374,74 +1374,119 @@ function CalendarTab() {
     return map;
   }, [transactions]);
 
-  const monthTotal = useMemo(() => {
-    return transactions
-      .filter(tx => (tx.date ?? '').startsWith(monthStr) && tx.transactionType === 'expense' && tx.status === 'done')
-      .reduce((s, tx) => s + tx.amount, 0);
+  const monthStats = useMemo(() => {
+    const monthTx = transactions.filter(tx => (tx.date ?? '').startsWith(monthStr) && tx.status === 'done');
+    const expenses = monthTx.filter(t => t.transactionType === 'expense').reduce((s, t) => s + t.amount, 0);
+    const income = monthTx.filter(t => t.transactionType === 'income').reduce((s, t) => s + t.amount, 0);
+    const saving = monthTx.filter(t => t.transactionType === 'saving').reduce((s, t) => s + t.amount, 0);
+    const balance = income - expenses;
+    // Category breakdown
+    const catMap: Record<string, number> = {};
+    monthTx.filter(t => t.transactionType === 'expense').forEach(t => {
+      const cat = t.category || 'Other';
+      catMap[cat] = (catMap[cat] ?? 0) + t.amount;
+    });
+    const cats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    return { expenses, income, saving, balance, cats, total: monthTx.length };
   }, [transactions, monthStr]);
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <button className="btn btn-icon btn-ghost btn-sm" onClick={() => setCalMonth(m => subMonths(m, 1))}>‹</button>
-          <span style={{ fontWeight: 700, fontSize: '1rem' }}>{format(calMonth, 'MMMM yyyy')}</span>
-          <button className="btn btn-icon btn-ghost btn-sm" onClick={() => setCalMonth(m => addMonths(m, 1))}>›</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => setCalMonth(new Date())}>Today</button>
+    <div className="grid-2">
+      {/* Stats card */}
+      <div className="card">
+        <div className="card-header">
+          <h3 style={{ margin: 0, fontSize: '0.95rem' }}>📊 Stats</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => setStatsMonth(m => subMonths(m, 1))}>‹</button>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, minWidth: 90, textAlign: 'center' }}>{format(statsMonth, 'MMM yyyy')}</span>
+            <button className="btn btn-ghost btn-sm" onClick={() => setStatsMonth(m => addMonths(m, 1))}>›</button>
+          </div>
         </div>
-        <div style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
-          Expenses: <strong style={{ color: '#DC2626' }}>{formatCurrency(monthTotal)}</strong>
+        <div className="card-body">
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+            {[
+              { label: 'expenses', value: monthStats.expenses, color: '#DC2626', prefix: '-' },
+              { label: 'income', value: monthStats.income, color: '#16A34A', prefix: '+' },
+              { label: 'balance', value: monthStats.balance, color: monthStats.balance >= 0 ? '#16A34A' : '#DC2626', prefix: '' },
+            ].map(({ label, value, color, prefix }) => (
+              <div key={label} style={{ padding: '0.35rem 0.65rem', borderRadius: 'var(--radius-sm)', background: COLOR.soft, border: `1px solid ${COLOR.primary}30` }}>
+                <span style={{ fontWeight: 700, fontSize: '0.9rem', color }}>{prefix}{formatCurrency(value)}</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginLeft: '0.3rem' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+          {monthStats.cats.map(([cat, amount]) => {
+            const pct = monthStats.expenses > 0 ? Math.round((amount / monthStats.expenses) * 100) : 0;
+            return (
+              <div key={cat} style={{ marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                  <span style={{ fontSize: '0.8rem' }}>{cat}</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: COLOR.primary }}>{formatCurrency(amount)} · {pct}%</span>
+                </div>
+                <div style={{ height: '6px', background: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, height: '100%', background: COLOR.primary, borderRadius: '3px', transition: 'width 0.4s' }} />
+                </div>
+              </div>
+            );
+          })}
+          {monthStats.total === 0 && <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '0.5rem 0' }}>No transactions this month</p>}
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.375rem' }}>
-        {WEEK_DAYS.map(d => (
-          <div key={d} style={{ textAlign: 'center', fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-muted)', padding: '0.25rem 0' }}>{d}</div>
-        ))}
-        {Array.from({ length: firstDow }, (_, i) => <div key={`e${i}`} />)}
-        {calDays.map(day => {
-          const dateStr = format(day, 'yyyy-MM-dd');
-          const dayTx = txByDate.get(dateStr) ?? [];
-          const dayExpenses = dayTx.filter(tx => tx.transactionType === 'expense').reduce((s, tx) => s + tx.amount, 0);
-          const dayIncome = dayTx.filter(tx => tx.transactionType === 'income').reduce((s, tx) => s + tx.amount, 0);
-          const isToday = dateStr === todayStr;
-          const hasTx = dayTx.length > 0;
-          return (
-            <div key={dateStr} style={{
-              minHeight: '5rem', padding: '0.375rem', borderRadius: 'var(--radius-md)',
-              border: `1.5px solid ${isToday ? COLOR.primary : 'var(--color-border)'}`,
-              background: isToday ? COLOR.soft : hasTx ? `${COLOR.primary}08` : 'var(--color-surface)',
-            }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: isToday ? 700 : 500, color: isToday ? COLOR.primary : 'var(--color-text)', marginBottom: '0.25rem' }}>
-                {format(day, 'd')}
-              </div>
-              {dayExpenses > 0 && (
-                <div style={{ fontSize: '0.65rem', color: '#DC2626', fontWeight: 600, lineHeight: 1.3 }}>
-                  -{formatCurrency(dayExpenses)}
-                </div>
-              )}
-              {dayIncome > 0 && (
-                <div style={{ fontSize: '0.65rem', color: '#16A34A', fontWeight: 600, lineHeight: 1.3 }}>
-                  +{formatCurrency(dayIncome)}
-                </div>
-              )}
-              {dayTx.map((tx, i) => (
-                <div key={i} style={{
-                  fontSize: '0.6rem', color: 'var(--color-text-muted)',
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  marginTop: '0.1rem',
-                }}>
-                  {tx.category}
-                </div>
-              ))}
-            </div>
-          );
-        })}
+      {/* Calendar card */}
+      <div className="card">
+        <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.95rem' }}>📅 Spending Calendar</h3></div>
+        <div style={{ padding: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '4px' }}>
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+              <div key={i} style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--color-text-muted)', padding: '2px 0' }}>{d}</div>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+            {Array.from({ length: firstDow }, (_, i) => <div key={`e${i}`} />)}
+            {calDays.map(day => {
+              const dateStr = format(day, 'yyyy-MM-dd');
+              const dayTx = txByDate.get(dateStr) ?? [];
+              const isToday = dateStr === todayStr;
+              const hasExpense = dayTx.some(t => t.transactionType === 'expense');
+              const hasIncome = dayTx.some(t => t.transactionType === 'income');
+              return (
+                <button key={dateStr}
+                  title={dayTx.map(t => `${t.category}: ${formatCurrency(t.amount)}`).join(', ') || 'No transactions'}
+                  style={{
+                    aspectRatio: '1', display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: '1px',
+                    borderRadius: '4px',
+                    border: isToday ? `2px solid ${COLOR.primary}` : 'none',
+                    background: dayTx.length > 0 ? COLOR.soft : 'var(--color-surface)',
+                    cursor: 'default', fontFamily: 'inherit', fontSize: '0.65rem',
+                    color: isToday ? COLOR.primary : 'var(--color-text)',
+                    fontWeight: isToday ? 700 : 400,
+                  }}>
+                  {format(day, 'd')}
+                  {(hasExpense || hasIncome) && (
+                    <div style={{ display: 'flex', gap: '1px' }}>
+                      {hasExpense && <span style={{ width: '0.55rem', height: '0.55rem', borderRadius: '50%', background: '#DC2626', display: 'inline-block' }} />}
+                      {hasIncome && <span style={{ width: '0.55rem', height: '0.55rem', borderRadius: '50%', background: '#16A34A', display: 'inline-block' }} />}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#DC2626', display: 'inline-block' }} /> Expense
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#16A34A', display: 'inline-block' }} /> Income
+            </span>
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -1450,7 +1495,7 @@ function CalendarTab() {
 type Tab = 'transactions' | 'fixed' | 'calendar' | 'products' | 'cart';
 
 export default function SpendingPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('transactions');
+  const [activeTab, setActiveTab] = useState<Tab>('calendar');
 
   return (
     <div className="page-content">
@@ -1476,6 +1521,12 @@ export default function SpendingPage() {
       {/* Tabs */}
       <div className="tabs mb-4">
         <button
+          className={`tab ${activeTab === 'calendar' ? 'active' : ''}`}
+          onClick={() => setActiveTab('calendar')}
+        >
+          📅 Calendar
+        </button>
+        <button
           className={`tab ${activeTab === 'transactions' ? 'active' : ''}`}
           onClick={() => setActiveTab('transactions')}
         >
@@ -1486,12 +1537,6 @@ export default function SpendingPage() {
           onClick={() => setActiveTab('fixed')}
         >
           🔄 Fixed Bills
-        </button>
-        <button
-          className={`tab ${activeTab === 'calendar' ? 'active' : ''}`}
-          onClick={() => setActiveTab('calendar')}
-        >
-          📅 Calendar
         </button>
         <button
           className={`tab ${activeTab === 'products' ? 'active' : ''}`}
@@ -1508,15 +1553,18 @@ export default function SpendingPage() {
       </div>
 
       {/* Tab content */}
-      <div className="card">
-        <div className="card-body">
-          {activeTab === 'transactions' && <TransactionsTab />}
-          {activeTab === 'fixed' && <FixedBillsTab />}
-          {activeTab === 'calendar' && <CalendarTab />}
-          {activeTab === 'products' && <ShoppingTab />}
-          {activeTab === 'cart' && <CartTab />}
+      {activeTab === 'calendar' ? (
+        <CalendarTab />
+      ) : (
+        <div className="card">
+          <div className="card-body">
+            {activeTab === 'transactions' && <TransactionsTab />}
+            {activeTab === 'fixed' && <FixedBillsTab />}
+            {activeTab === 'products' && <ShoppingTab />}
+            {activeTab === 'cart' && <CartTab />}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
