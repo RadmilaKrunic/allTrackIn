@@ -4,7 +4,8 @@ import {
   format, startOfMonth, endOfMonth, getDay, eachDayOfInterval,
   addMonths, subMonths,
 } from 'date-fns';
-import { spendingApi } from '../../api/client';
+import { spendingApi, settingsApi } from '../../api/client';
+import type { Category } from '../../types';
 import { useApp } from '../../contexts/AppContext';
 import { MODULE_COLORS } from '../../themes/themes';
 import type { SpendingEntry, TransactionType, PlanDoneStatus, CartItem } from '../../types';
@@ -13,6 +14,37 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import PlanDoneToggle from '../../components/ui/PlanDoneToggle';
 
 const COLOR = MODULE_COLORS.spending;
+
+function useCategoryOptions(module: string) {
+  const { data = [] } = useQuery<Category[]>({
+    queryKey: ['categories', module],
+    queryFn: () => settingsApi.getCategories(module),
+  });
+  return data;
+}
+
+function CategorySelect({ value, onChange, required, error }: { value: string; onChange: (v: string) => void; required?: boolean; error?: string }) {
+  const categories = useCategoryOptions('spending');
+  if (categories.length === 0) {
+    return (
+      <>
+        <input className="form-input" type="text" placeholder="e.g. Food, Rent…" value={value} onChange={e => onChange(e.target.value)} />
+        {error && <span style={{ color: '#DC2626', fontSize: '0.78rem' }}>{error}</span>}
+      </>
+    );
+  }
+  return (
+    <>
+      <select className="form-select" value={value} onChange={e => onChange(e.target.value)} required={required}>
+        <option value="">Select category…</option>
+        {categories.map(c => (
+          <option key={c._id} value={c.name}>{c.icon ? `${c.icon} ` : ''}{c.name}</option>
+        ))}
+      </select>
+      {error && <span style={{ color: '#DC2626', fontSize: '0.78rem' }}>{error}</span>}
+    </>
+  );
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -137,14 +169,7 @@ function TransactionForm({ initial = EMPTY_TRANSACTION, onSubmit, onCancel, load
         </div>
         <div className="form-group">
           <label className="form-label">Category *</label>
-          <input
-            className="form-input"
-            type="text"
-            placeholder="e.g. Food, Rent…"
-            value={form.category}
-            onChange={e => set('category', e.target.value)}
-          />
-          {errors.category && <span style={{ color: '#DC2626', fontSize: '0.78rem' }}>{errors.category}</span>}
+          <CategorySelect value={form.category} onChange={v => set('category', v)} required error={errors.category} />
         </div>
       </div>
 
@@ -315,14 +340,7 @@ function FixedForm({ initial = EMPTY_FIXED, onSubmit, onCancel, loading, submitL
 
       <div className="form-group">
         <label className="form-label">Category *</label>
-        <input
-          className="form-input"
-          type="text"
-          placeholder="e.g. Rent, Netflix…"
-          value={form.category}
-          onChange={e => set('category', e.target.value)}
-        />
-        {errors.category && <span style={{ color: '#DC2626', fontSize: '0.78rem' }}>{errors.category}</span>}
+        <CategorySelect value={form.category} onChange={v => set('category', v)} required error={errors.category} />
       </div>
 
       <div className="form-group">
@@ -453,13 +471,7 @@ function ProductForm({ initial = EMPTY_PRODUCT, onSubmit, onCancel, loading, sub
 
       <div className="form-group">
         <label className="form-label">Category</label>
-        <input
-          className="form-input"
-          type="text"
-          placeholder="e.g. Dairy, Produce…"
-          value={form.category}
-          onChange={e => set('category', e.target.value)}
-        />
+        <CategorySelect value={form.category} onChange={v => set('category', v)} />
       </div>
 
       <div className="form-group">

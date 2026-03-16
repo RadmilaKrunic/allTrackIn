@@ -74,7 +74,7 @@ export default function CalendarView({ onDayClick }: Props) {
                 key={day.toISOString()}
                 onClick={() => onDayClick?.(day, items)}
                 style={{
-                  aspectRatio: '1', display: 'flex', flexDirection: 'column',
+                  aspectRatio: '1', position: 'relative', display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center', gap: '2px',
                   padding: '2px',
                   borderRadius: 'var(--radius-sm)',
@@ -85,13 +85,13 @@ export default function CalendarView({ onDayClick }: Props) {
                   transition: 'all 0.15s',
                 }}
               >
-                <span style={{ fontSize: '0.78rem', fontWeight: isCurrentDay ? 700 : 400, color: isCurrentDay ? 'var(--color-primary-dark)' : 'var(--color-text)', lineHeight: 1 }}>
+                <span style={{ position: 'absolute', top: '2px', left: '4px', fontSize: '0.72rem', fontWeight: isCurrentDay ? 700 : 400, color: isCurrentDay ? 'var(--color-primary-dark)' : 'var(--color-text)', lineHeight: 1 }}>
                   {format(day, 'd')}
                 </span>
                 {moduleTypes.length > 0 && (
-                  <div style={{ display: 'flex', gap: '2px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', gap: '2px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '6px' }}>
                     {moduleTypes.slice(0, 4).map(mod => (
-                      <span key={mod} style={{ width: '5px', height: '5px', borderRadius: '50%', background: MODULE_COLORS[mod]?.primary ?? '#999' }} />
+                      <span key={mod} style={{ width: '10px', height: '10px', borderRadius: '50%', background: MODULE_COLORS[mod]?.primary ?? '#999' }} />
                     ))}
                   </div>
                 )}
@@ -106,7 +106,7 @@ export default function CalendarView({ onDayClick }: Props) {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
           {DOT_MODULES.filter(m => m in MODULE_COLORS).map(mod => (
             <span key={mod} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: MODULE_COLORS[mod]?.primary, display: 'inline-block' }} />
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: MODULE_COLORS[mod]?.primary, display: 'inline-block', flexShrink: 0 }} />
               {mod.charAt(0).toUpperCase() + mod.slice(1)}
             </span>
           ))}
