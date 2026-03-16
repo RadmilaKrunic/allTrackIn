@@ -1,22 +1,25 @@
 using AllTrackIn.Api.Configuration;
 using AllTrackIn.Api.Models;
 using LiteDB;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using System;
+using System.IO;
 
 namespace AllTrackIn.Api.Services
 {
     public class LiteDbContext : IDisposable
     {
         private readonly LiteDatabase _db;
-
-        public LiteDbContext(IOptions<LiteDbSettings> settings)
+        private readonly IHostingEnvironment _env;
+        public LiteDbContext(IOptions<LiteDbSettings> settings, IHostingEnvironment env)
         {
-            var connectionString = new ConnectionString(settings.Value.DatabasePath)
+            _env = env;
+            var connectionString = new ConnectionString(Path.Combine(_env.ContentRootPath, settings.Value.DatabasePath))
             {
                 Connection = ConnectionType.Shared
             };
-            _db = new LiteDatabase(connectionString);
+            _db = new LiteDatabase( connectionString);
             EnsureIndexes();
         }
 
