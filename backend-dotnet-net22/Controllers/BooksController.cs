@@ -13,10 +13,12 @@ namespace AllTrackIn.Api.Controllers
     public class BooksController : ControllerBase
     {
         private readonly BaseService<BookEntry> _service;
+        private readonly BaseService<ReadingLogEntry> _readingLogService;
 
         public BooksController(LiteDbContext db)
         {
             _service = new BaseService<BookEntry>(db.Books);
+            _readingLogService = new BaseService<ReadingLogEntry>(db.ReadingLogs);
         }
 
         [HttpGet]
@@ -80,5 +82,34 @@ namespace AllTrackIn.Api.Controllers
             _service.Delete(id);
             return NoContent();
         }
+
+        [HttpGet("reading-log")]
+        public IActionResult GetReadingLog()
+        {
+            var uid = User.GetUserId();
+            var result = _readingLogService.FindAll(e => e.UserId == uid);
+            return Ok(result.OrderBy(e => e.Date).ToList());
+        }
+
+        [HttpPut("reading-log/{date}")]
+        public IActionResult ToggleReadingDay(string date, [FromBody] ReadingLogToggle body)
+        {
+            var uid = User.GetUserId();
+            var existing = _readingLogService.FindOne(e => e.UserId == uid && e.Date == date);
+            if (existing != null)
+            {
+                existing.Read = body.Read;
+                var updated = _readingLogService.Update(existing);
+                return Ok(updated);
+            }
+            var entry = new ReadingLogEntry { UserId = uid, Date = date, Read = body.Read };
+            var created = _readingLogService.Create(entry);
+            return Ok(created);
+        }
+    }
+
+    public class ReadingLogToggle
+    {
+        public bool Read { get; set; }
     }
 }
