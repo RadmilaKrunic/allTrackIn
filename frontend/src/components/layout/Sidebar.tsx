@@ -78,7 +78,7 @@ export default function Sidebar() {
               >
                 <span style={{ fontSize: '1.1rem', width: '1.25rem', textAlign: 'center' }}>{item.icon}</span>
                 <span>{item.label}</span>
-                {item.color && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: item.color, marginLeft: 'auto' }} />}
+                {item.color && <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.color, marginLeft: 'auto', flexShrink: 0 }} />}
               </NavLink>
             );
           })}

@@ -12,11 +12,11 @@ html {
 }
 
 @media (min-width: 768px) {
-  html { font-size: 18px; }
+  html { font-size: 14px; }
 }
 
 @media (min-width: 1024px) {
-  html { font-size: 20px; }
+  html { font-size: 16px; }
 }
 
 /* Safe area for iPhone notch/home indicator */
@@ -476,6 +476,7 @@ a:hover { color: var(--color-primary-dark); }
   .form-row { grid-template-columns: 1fr; }
   .modal-footer { flex-direction: column-reverse; }
   .modal-footer .btn { width: 100%; }
+  .grid-2, .grid-3, .grid-auto { grid-template-columns: 1fr; }
 }
 
 /* ===== Utility ===== */

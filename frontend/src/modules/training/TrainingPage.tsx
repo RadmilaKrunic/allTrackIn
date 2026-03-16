@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   format, startOfWeek, addDays, startOfMonth, endOfMonth,
   getDay, eachDayOfInterval,
 } from 'date-fns';
 import type { TrainingEntry, ActivityType, PlanDoneStatus } from '../../types';
-import { trainingApi } from '../../api/client';
+import { trainingApi, settingsApi } from '../../api/client';
+import type { Category } from '../../types';
 import { useApp } from '../../contexts/AppContext';
 import { MODULE_COLORS } from '../../themes/themes';
 import Modal from '../../components/ui/Modal';
@@ -64,6 +66,35 @@ interface WorkoutFormState {
 function makeEmptyForm(dateStr?: string): WorkoutFormState {
   const d = dateStr ?? getTodayStr();
   return { date: d, activityType: 'running', duration: '', distance: '', pace: '', workoutType: '', notes: '', status: smartStatus(d) };
+}
+
+// ─── Workout Type Select ───────────────────────────────────────────────────────
+
+function WorkoutTypeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['categories', 'training'],
+    queryFn: () => settingsApi.getCategories('training'),
+  });
+
+  if (categories.length === 0) {
+    return (
+      <div className="form-group">
+        <label className="form-label">Workout Type</label>
+        <input className="form-input" type="text" placeholder="Upper body, Legs…" value={value} onChange={e => onChange(e.target.value)} />
+      </div>
+    );
+  }
+  return (
+    <div className="form-group">
+      <label className="form-label">Workout Type</label>
+      <select className="form-select" value={value} onChange={e => onChange(e.target.value)}>
+        <option value="">Select type…</option>
+        {categories.map(c => (
+          <option key={c._id} value={c.name}>{c.icon ? `${c.icon} ` : ''}{c.name}</option>
+        ))}
+      </select>
+    </div>
+  );
 }
 
 // ─── Workout Form ─────────────────────────────────────────────────────────────
@@ -129,10 +160,7 @@ function WorkoutForm({ form, onChange, errors }: WorkoutFormProps) {
           {errors.duration && <span style={{ color: '#DC2626', fontSize: '0.78rem' }}>{errors.duration}</span>}
         </div>
         {showWorkoutType && (
-          <div className="form-group">
-            <label className="form-label">Workout Type</label>
-            <input className="form-input" type="text" placeholder="Upper body, Legs…" value={form.workoutType} onChange={e => set('workoutType', e.target.value)} />
-          </div>
+          <WorkoutTypeSelect value={form.workoutType} onChange={v => set('workoutType', v)} />
         )}
       </div>
 
@@ -384,7 +412,7 @@ export default function TrainingPage() {
       </div>
 
       {/* Stats + Calendar row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+      <div className="grid-2" style={{ marginBottom: '1.25rem' }}>
         <div className="card">
           <div className="card-header">
             <h3 style={{ margin: 0, fontSize: '0.95rem' }}>📊 Stats</h3>

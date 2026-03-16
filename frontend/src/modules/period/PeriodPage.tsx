@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday as fnsIsToday } from 'date-fns';
 import { periodApi } from '../../api/client';
 import { useApp } from '../../contexts/AppContext';
 import { MODULE_COLORS } from '../../themes/themes';
@@ -242,6 +243,9 @@ export default function PeriodPage() {
         </div>
       )}
 
+      {/* Calendar */}
+      <PeriodCalendar entries={entries} />
+
       {/* History */}
       <div className="card">
         <div className="card-header">
@@ -319,6 +323,93 @@ export default function PeriodPage() {
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)}
         onConfirm={() => deleteTarget?._id && deleteMut.mutate(deleteTarget._id)}
         title="Delete Entry" message="Delete this period entry?" confirmLabel="Delete" variant="danger" />
+    </div>
+  );
+}
+
+// ─── Period Calendar ──────────────────────────────────────────────────────────
+
+const WEEK_DAYS_SHORT = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+function PeriodCalendar({ entries }: { entries: PeriodEntry[] }) {
+  const [calDate, setCalDate] = useState(new Date());
+
+  const monthStart = startOfMonth(calDate);
+  const monthEnd = endOfMonth(calDate);
+  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const padStart = getDay(monthStart);
+
+  function isPeriodDay(ds: string): boolean {
+    return entries.some(e => {
+      if (!e.startDate) return false;
+      const end = e.endDate ?? e.startDate;
+      return ds >= e.startDate && ds <= end;
+    });
+  }
+
+  function isPredictedDay(ds: string, entry: PeriodEntry): boolean {
+    if (!entry.startDate) return false;
+    const bleedDays = entry.bleedingDays ?? (entry.endDate ? daysBetween(entry.startDate, entry.endDate) + 1 : 5);
+    const end = entry.endDate ?? entry.startDate;
+    return ds >= entry.startDate && ds <= end;
+  }
+
+  return (
+    <div className="card" style={{ marginBottom: '1.5rem' }}>
+      <div className="card-header">
+        <button className="btn btn-ghost btn-sm" onClick={() => setCalDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>‹</button>
+        <h3 style={{ margin: 0, fontSize: '0.95rem', color: C.text }}>🗓 {format(calDate, 'MMMM yyyy')}</h3>
+        <div style={{ display: 'flex', gap: '0.25rem' }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setCalDate(new Date())}>Today</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setCalDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>›</button>
+        </div>
+      </div>
+      <div style={{ padding: '0.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '4px' }}>
+          {WEEK_DAYS_SHORT.map(d => (
+            <div key={d} style={{ textAlign: 'center', fontSize: '0.7rem', fontWeight: 600, color: 'var(--color-text-muted)', padding: '4px 0' }}>{d}</div>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+          {Array.from({ length: padStart }).map((_, i) => <div key={`p${i}`} />)}
+          {days.map(day => {
+            const ds = format(day, 'yyyy-MM-dd');
+            const isPeriod = isPeriodDay(ds);
+            const isCurrentDay = fnsIsToday(day);
+            return (
+              <div
+                key={ds}
+                style={{
+                  aspectRatio: '1', position: 'relative', display: 'flex',
+                  flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  borderRadius: 'var(--radius-sm)', minHeight: '36px',
+                  border: isCurrentDay ? `2px solid ${C.primary}` : '1px solid transparent',
+                  background: isPeriod ? C.soft : isCurrentDay ? 'var(--color-primary-light)' : 'transparent',
+                }}
+              >
+                <span style={{
+                  position: 'absolute', top: '2px', left: '4px',
+                  fontSize: '0.72rem', fontWeight: isCurrentDay ? 700 : 400,
+                  color: isCurrentDay ? C.primary : 'var(--color-text)', lineHeight: 1,
+                }}>
+                  {format(day, 'd')}
+                </span>
+                {isPeriod && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '6px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: C.primary, display: 'inline-block' }} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: C.primary, display: 'inline-block' }} />
+            Period day
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

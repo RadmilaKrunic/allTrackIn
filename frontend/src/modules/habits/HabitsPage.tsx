@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format, subDays, parseISO } from 'date-fns';
+import { format, subDays, startOfMonth, eachDayOfInterval, endOfMonth, getDay } from 'date-fns';
 import { habitsApi } from '../../api/client';
 import { MODULE_COLORS } from '../../themes/themes';
 import type { HabitDefinition, HabitLog } from '../../types';
@@ -23,28 +23,45 @@ function calcStreak(logs: HabitLog[], habitId: string, todayStr: string): number
   return streak;
 }
 
-function WeekDots({ logs, habitId, color }: { logs: HabitLog[]; habitId: string; color: string }) {
+const MONTH_DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+function MonthDots({ logs, habitId, color }: { logs: HabitLog[]; habitId: string; color: string }) {
   const today = new Date();
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = subDays(today, 6 - i);
-    const ds = format(d, 'yyyy-MM-dd');
-    const done = logs.some(l => l.habitId === habitId && l.date === ds && l.done);
-    return { ds, done, label: format(d, 'EEE')[0] };
-  });
+  const monthStart = startOfMonth(today);
+  const monthEnd = endOfMonth(today);
+  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const padStart = getDay(monthStart);
+
+  const doneSet = useMemo(() => new Set(
+    logs.filter(l => l.habitId === habitId && l.done).map(l => l.date)
+  ), [logs, habitId]);
 
   return (
-    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-      {days.map(({ ds, done, label }) => (
-        <div key={ds} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.1rem' }}>
-          <div style={{
-            width: '20px', height: '20px', borderRadius: '50%',
-            background: done ? color : 'var(--color-border)',
-            border: `1px solid ${done ? color : 'var(--color-border)'}`,
-            transition: 'background 0.2s',
-          }} />
-          <span style={{ fontSize: '0.55rem', color: 'var(--color-text-muted)' }}>{label}</span>
-        </div>
-      ))}
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '2px' }}>
+        {MONTH_DAY_LABELS.map((d, i) => (
+          <div key={i} style={{ textAlign: 'center', fontSize: '0.55rem', color: 'var(--color-text-muted)', lineHeight: 1 }}>{d}</div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+        {Array.from({ length: padStart }).map((_, i) => <div key={`p${i}`} />)}
+        {days.map(day => {
+          const ds = format(day, 'yyyy-MM-dd');
+          const done = doneSet.has(ds);
+          const isToday = ds === format(today, 'yyyy-MM-dd');
+          return (
+            <div key={ds} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <div style={{
+                width: '10px', height: '10px', borderRadius: '50%',
+                background: done ? color : 'var(--color-border)',
+                border: `1px solid ${isToday ? color : done ? color : 'var(--color-border)'}`,
+                opacity: isToday && !done ? 0.5 : 1,
+                transition: 'background 0.2s',
+              }} />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -109,7 +126,7 @@ function HabitCard({
             </span>
           )}
         </div>
-        <WeekDots logs={logs} habitId={habit._id!} color={color} />
+        <MonthDots logs={logs} habitId={habit._id!} color={color} />
       </div>
     </div>
   );
