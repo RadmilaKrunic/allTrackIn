@@ -1,4 +1,5 @@
 using LiteDB;
+using Newtonsoft.Json;
 using System;
 
 namespace AllTrackIn.Api.Models
@@ -6,6 +7,7 @@ namespace AllTrackIn.Api.Models
     public abstract class BaseDocument
     {
         [BsonId]
+        [JsonProperty("_id")]
         public string Id { get; set; }
 
         [BsonField("userId")]
