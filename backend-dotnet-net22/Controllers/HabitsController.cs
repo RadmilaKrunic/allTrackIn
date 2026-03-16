@@ -73,8 +73,9 @@ namespace AllTrackIn.Api.Controllers
             var uid = User.GetUserId();
             var result = _logsService.FindAll(e => e.UserId == uid
                 && (date == null || e.Date == date)
-                && (date != null || startDate == null || endDate == null || (e.Date != null && string.Compare(e.Date, startDate) >= 0 && string.Compare(e.Date, endDate) <= 0))
-                && (habitId == null || e.HabitId == habitId));
+                && (habitId == null || e.HabitId == habitId))
+                .Where(e => date != null || startDate == null || endDate == null || (e.Date != null && string.Compare(e.Date, startDate) >= 0 && string.Compare(e.Date, endDate) <= 0))
+                .ToList();
             return Ok(result);
         }
 
