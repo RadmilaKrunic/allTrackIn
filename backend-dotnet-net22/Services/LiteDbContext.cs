@@ -27,6 +27,7 @@ namespace AllTrackIn.Api.Services
         public ILiteCollection<SpendingEntry> Spending => _db.GetCollection<SpendingEntry>("spending");
         public ILiteCollection<TrainingEntry> Training => _db.GetCollection<TrainingEntry>("training");
         public ILiteCollection<BookEntry> Books => _db.GetCollection<BookEntry>("books");
+        public ILiteCollection<ReadingLogEntry> ReadingLogs => _db.GetCollection<ReadingLogEntry>("readingLogs");
         public ILiteCollection<EventEntry> Events => _db.GetCollection<EventEntry>("events");
         public ILiteCollection<WorkEntry> Work => _db.GetCollection<WorkEntry>("work");
         public ILiteCollection<EatingEntry> Eating => _db.GetCollection<EatingEntry>("eating");
@@ -46,6 +47,7 @@ namespace AllTrackIn.Api.Services
             Spending.EnsureIndex(x => x.UserId);
             Training.EnsureIndex(x => x.UserId);
             Books.EnsureIndex(x => x.UserId);
+            ReadingLogs.EnsureIndex(x => x.UserId);
             Events.EnsureIndex(x => x.UserId);
             Work.EnsureIndex(x => x.UserId);
             Eating.EnsureIndex(x => x.UserId);
