@@ -352,7 +352,7 @@ export default function EatingPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {/* Header */}
       <div style={{
-        background: COLOR.soft,
+        background: COLOR.primary + '1A',
         border: `1px solid ${COLOR.primary}30`,
         borderRadius: 'var(--radius-xl)', padding: '1.5rem',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem',

@@ -174,7 +174,7 @@ export default function WorkPage() {
     <div className="page-content">
       {/* Header */}
       <div style={{
-        background: C.soft,
+        background: C.primary + '1A',
         border: `1px solid ${C.primary}30`,
         borderRadius: 'var(--radius-xl)',
         padding: '1.5rem',
