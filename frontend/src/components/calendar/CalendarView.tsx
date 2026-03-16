@@ -11,7 +11,6 @@ interface Props {
 
 type CalendarItem = Record<string, unknown> & { module?: string; date?: string; startDate?: string };
 
-// Modules to show dots for (not all)
 const DOT_MODULES = ['spending', 'training', 'events', 'work', 'eating', 'notes', 'period'];
 
 export default function CalendarView({ onDayClick }: Props) {
@@ -46,23 +45,21 @@ export default function CalendarView({ onDayClick }: Props) {
     <div className="card">
       <div className="card-header">
         <button className="btn btn-ghost btn-sm" onClick={() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>‹</button>
-        <h3 style={{ margin: 0, fontSize: '1rem' }}>{format(currentDate, 'MMMM yyyy')}</h3>
-        <div style={{ display: 'flex', gap: '0.375rem' }}>
+        <h3 className="modal-title">{format(currentDate, 'MMMM yyyy')}</h3>
+        <div className="flex gap-2">
           <button className="btn btn-ghost btn-sm" onClick={() => setCurrentDate(new Date())}>Today</button>
           <button className="btn btn-ghost btn-sm" onClick={() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>›</button>
         </div>
       </div>
 
-      <div style={{ padding: '0.75rem' }}>
-        {/* Weekday headers */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '4px' }}>
+      <div className="calendar-inner">
+        <div className="calendar-weekdays">
           {WEEK_DAYS.map(d => (
-            <div key={d} style={{ textAlign: 'center', fontSize: '0.7rem', fontWeight: 600, color: 'var(--color-text-muted)', padding: '4px 0' }}>{d}</div>
+            <div key={d} className="calendar-weekday">{d}</div>
           ))}
         </div>
 
-        {/* Day grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+        <div className="calendar-grid">
           {Array.from({ length: startPad }).map((_, i) => <div key={`p${i}`} />)}
           {days.map(day => {
             const items = getItemsForDay(day);
@@ -73,25 +70,13 @@ export default function CalendarView({ onDayClick }: Props) {
               <button
                 key={day.toISOString()}
                 onClick={() => onDayClick?.(day, items)}
-                style={{
-                  aspectRatio: '1', position: 'relative', display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center', gap: '2px',
-                  padding: '2px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: isCurrentDay ? '2px solid var(--color-primary)' : '1px solid transparent',
-                  background: isCurrentDay ? 'var(--color-primary-light)' : items.length ? 'var(--color-surface)' : 'transparent',
-                  cursor: 'pointer', fontFamily: 'inherit',
-                  minHeight: '36px',
-                  transition: 'all 0.15s',
-                }}
+                className={`calendar-day${isCurrentDay ? ' today' : ''}${!isCurrentDay && items.length ? ' has-items' : ''}`}
               >
-                <span style={{ position: 'absolute', top: '2px', left: '4px', fontSize: '0.72rem', fontWeight: isCurrentDay ? 700 : 400, color: isCurrentDay ? 'var(--color-primary-dark)' : 'var(--color-text)', lineHeight: 1 }}>
-                  {format(day, 'd')}
-                </span>
+                <span className="calendar-day-number">{format(day, 'd')}</span>
                 {moduleTypes.length > 0 && (
-                  <div style={{ display: 'flex', gap: '2px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '6px' }}>
+                  <div className="calendar-dots">
                     {moduleTypes.slice(0, 4).map(mod => (
-                      <span key={mod} style={{ width: '10px', height: '10px', borderRadius: '50%', background: MODULE_COLORS[mod]?.primary ?? '#999' }} />
+                      <span key={mod} className="module-dot" style={{ background: MODULE_COLORS[mod]?.primary ?? '#999' }} />
                     ))}
                   </div>
                 )}
@@ -100,13 +85,12 @@ export default function CalendarView({ onDayClick }: Props) {
           })}
         </div>
 
-        {isLoading && <div style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--color-text-muted)', fontSize: '0.78rem' }}>Loading…</div>}
+        {isLoading && <div className="calendar-loading">Loading…</div>}
 
-        {/* Legend */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
+        <div className="calendar-legend">
           {DOT_MODULES.filter(m => m in MODULE_COLORS).map(mod => (
-            <span key={mod} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: MODULE_COLORS[mod]?.primary, display: 'inline-block', flexShrink: 0 }} />
+            <span key={mod} className="calendar-legend-item">
+              <span className="module-dot" style={{ background: MODULE_COLORS[mod]?.primary }} />
               {mod.charAt(0).toUpperCase() + mod.slice(1)}
             </span>
           ))}

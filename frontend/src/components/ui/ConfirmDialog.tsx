@@ -35,7 +35,7 @@ export default function ConfirmDialog({
         </>
       }
     >
-      <p style={{ color: 'var(--color-text-secondary)' }}>{message}</p>
+      <p className="text-secondary">{message}</p>
     </Modal>
   );
 }

@@ -25,13 +25,7 @@ export default function TopBar() {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
-    <header style={{
-      height: '64px', background: 'var(--color-bg-card)',
-      borderBottom: '1px solid var(--color-border)',
-      display: 'flex', alignItems: 'center',
-      padding: '0 1.5rem', gap: '1rem',
-      position: 'sticky', top: 0, zIndex: 100, flexShrink: 0,
-    }}>
+    <header className="topbar">
       <button
         className="btn btn-icon btn-ghost mobile-menu-btn"
         onClick={() => setSidebarOpen(true)}
@@ -40,16 +34,15 @@ export default function TopBar() {
         ☰
       </button>
 
-      <div style={{ flex: 1 }}>
-        <h2 style={{ fontSize: '1.05rem', fontWeight: 600, margin: 0, lineHeight: 1.2 }}>{title}</h2>
-        <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', margin: 0 }}>{today}</p>
+      <div className="topbar-title-area">
+        <h2 className="topbar-title">{title}</h2>
+        <p className="topbar-date">{today}</p>
       </div>
 
       <select
         value={currentTheme}
         onChange={(e) => setCurrentTheme(e.target.value)}
-        className="form-select"
-        style={{ width: 'auto', fontSize: '0.78rem', padding: '0.3rem 2rem 0.3rem 0.6rem' }}
+        className="form-select topbar-theme-select"
         aria-label="Theme"
       >
         {Object.entries(themes).map(([key, theme]) => (
@@ -58,16 +51,8 @@ export default function TopBar() {
       </select>
 
       {user && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div
-            title={`${user.name} (${user.email})`}
-            style={{
-              width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0,
-              background: 'var(--color-primary)', color: 'white',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.9rem', fontWeight: 700, cursor: 'default', userSelect: 'none',
-            }}
-          >
+        <div className="topbar-user">
+          <div className="topbar-avatar" title={`${user.name} (${user.email})`}>
             {user.name.charAt(0).toUpperCase()}
           </div>
           <button

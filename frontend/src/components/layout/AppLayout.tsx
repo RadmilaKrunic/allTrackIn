@@ -10,7 +10,7 @@ export default function AppLayout() {
       <Sidebar />
       <div className="main-content">
         <TopBar />
-        <main className="page-content" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+        <main className="page-content page-content-mobile">
           <Outlet />
         </main>
       </div>

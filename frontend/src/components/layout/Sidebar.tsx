@@ -53,59 +53,49 @@ export default function Sidebar() {
   return (
     <>
       {sidebarOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 199, backdropFilter: 'blur(2px)' }} onClick={() => setSidebarOpen(false)} />
+        <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}
-        style={{ width: '220px', flexShrink: 0, background: 'var(--color-bg-card)', borderRight: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', height: '100dvh', position: 'sticky', top: 0, overflowY: 'auto', zIndex: 200, transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)' }}
-      >
-        <div style={{ padding: '1.5rem 1.25rem 1rem', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+        <div className="sidebar-header">
           <div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-primary)', letterSpacing: '-0.02em' }}>✨ AllTrackIn</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '0.1rem' }}>Your life, beautifully tracked</div>
+            <div className="sidebar-logo">✨ AllTrackIn</div>
+            <div className="sidebar-tagline">Your life, beautifully tracked</div>
           </div>
           <button className="btn btn-icon btn-ghost mobile-close-btn" onClick={() => setSidebarOpen(false)}>✕</button>
         </div>
 
-        <nav style={{ flex: 1, padding: '0.75rem' }}>
+        <nav className="sidebar-nav">
           {navItems.map((item, i) => {
-            if ('divider' in item) return <div key={i} style={{ height: '1px', background: 'var(--color-border)', margin: '0.5rem 0.25rem' }} />;
+            if ('divider' in item) return <div key={i} className="sidebar-divider" />;
             const isActive = item.exact ? location.pathname === item.to : location.pathname.startsWith(item.to);
             return (
               <NavLink key={item.to} to={item.to}
                 onClick={() => { if (window.innerWidth < 768) setSidebarOpen(false); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.875rem', borderRadius: 'var(--radius-md)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500, marginBottom: '0.125rem', background: isActive ? 'var(--color-surface)' : 'transparent', color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)', borderLeft: isActive && item.color ? `3px solid ${item.color}` : '3px solid transparent', transition: 'all 0.15s' }}
+                className={`sidebar-link${isActive ? ' active' : ''}`}
+                style={isActive && item.color ? { borderLeftColor: item.color } : undefined}
               >
-                <span style={{ fontSize: '1.1rem', width: '1.25rem', textAlign: 'center' }}>{item.icon}</span>
+                <span className="sidebar-icon">{item.icon}</span>
                 <span>{item.label}</span>
-                {item.color && <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.color, marginLeft: 'auto', flexShrink: 0 }} />}
+                {item.color && <span className="sidebar-dot" style={{ background: item.color }} />}
               </NavLink>
             );
           })}
         </nav>
 
-        <div style={{ padding: '0.875rem 1.25rem', borderTop: '1px solid var(--color-border)' }}>
+        <div className="sidebar-footer">
           {user && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.625rem' }}>
-              <div style={{
-                width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-                background: 'var(--color-primary)', color: 'white',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.85rem', fontWeight: 700,
-              }}>
+            <div className="sidebar-user">
+              <div className="sidebar-avatar">
                 {user.name.charAt(0).toUpperCase()}
               </div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
+              <div className="sidebar-user-info">
+                <div className="sidebar-username">{user.name}</div>
+                <div className="sidebar-email">{user.email}</div>
               </div>
             </div>
           )}
-          <button
-            onClick={handleLogout}
-            className="btn btn-secondary btn-sm"
-            style={{ width: '100%', justifyContent: 'center', fontSize: '0.8rem' }}
-          >
+          <button onClick={handleLogout} className="btn btn-secondary btn-sm w-full" style={{ justifyContent: 'center' }}>
             🚪 Sign out
           </button>
         </div>
