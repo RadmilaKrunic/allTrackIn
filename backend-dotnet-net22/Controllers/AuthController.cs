@@ -14,7 +14,7 @@ using System.Text;
 namespace AllTrackIn.Api.Controllers
 {
     [ApiController]
-    [Route("api/auth")]
+    [Route("auth")]
     public class AuthController : ControllerBase
     {
         private readonly BaseService<User> _users;

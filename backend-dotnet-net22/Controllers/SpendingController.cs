@@ -11,7 +11,7 @@ using System.Linq;
 namespace AllTrackIn.Api.Controllers
 {
     [ApiController]
-    [Route("api/spending")]
+    [Route("spending")]
     [Authorize]
     public class SpendingController : ControllerBase
     {

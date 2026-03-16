@@ -9,7 +9,7 @@ using System.Linq;
 namespace AllTrackIn.Api.Controllers
 {
     [ApiController]
-    [Route("api/calendar")]
+    [Route("calendar")]
     [Authorize]
     public class CalendarController : ControllerBase
     {

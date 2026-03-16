@@ -10,7 +10,7 @@ using System.Linq;
 namespace AllTrackIn.Api.Controllers
 {
     [ApiController]
-    [Route("api/period")]
+    [Route("period")]
     [Authorize]
     public class PeriodController : ControllerBase
     {

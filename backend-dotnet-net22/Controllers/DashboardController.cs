@@ -9,7 +9,7 @@ using System.Linq;
 namespace AllTrackIn.Api.Controllers
 {
     [ApiController]
-    [Route("api/dashboard")]
+    [Route("dashboard")]
     [Authorize]
     public class DashboardController : ControllerBase
     {

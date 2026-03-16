@@ -8,7 +8,7 @@ using System.Linq;
 namespace AllTrackIn.Api.Controllers
 {
     [ApiController]
-    [Route("api/notes")]
+    [Route("notes")]
     [Authorize]
     public class NotesController : ControllerBase
     {

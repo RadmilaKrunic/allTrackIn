@@ -9,7 +9,7 @@ using System.Linq;
 namespace AllTrackIn.Api.Controllers
 {
     [ApiController]
-    [Route("api/todos")]
+    [Route("todos")]
     [Authorize]
     public class TodosController : ControllerBase
     {

@@ -8,7 +8,7 @@ using System.Linq;
 namespace AllTrackIn.Api.Controllers
 {
     [ApiController]
-    [Route("api/events")]
+    [Route("events")]
     [Authorize]
     public class EventsController : ControllerBase
     {
