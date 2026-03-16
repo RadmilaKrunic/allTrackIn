@@ -26,24 +26,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--color-bg)', padding: '1.5rem',
-    }}>
-      <div style={{
-        width: '100%', maxWidth: '420px',
-        background: 'var(--color-bg-card)', borderRadius: 'var(--radius-xl)',
-        boxShadow: 'var(--shadow-lg)', padding: '2.5rem 2rem',
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🌟</div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>Welcome back</h1>
-          <p style={{ margin: '0.375rem 0 0', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-            Sign in to your AllTrack account
-          </p>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="auth-icon">🌟</div>
+          <h1 className="auth-title">Welcome back</h1>
+          <p className="auth-subtitle">Sign in to your AllTrack account</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
             <label className="form-label">Email</label>
             <input
@@ -69,31 +60,16 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && (
-            <div style={{
-              padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
-              background: '#FEF2F2', border: '1px solid #FECACA',
-              color: '#DC2626', fontSize: '0.85rem',
-            }}>
-              {error}
-            </div>
-          )}
+          {error && <div className="auth-error">{error}</div>}
 
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading}
-            style={{ marginTop: '0.5rem', padding: '0.75rem', fontSize: '1rem' }}
-          >
+          <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+        <p className="auth-footer">
           Don't have an account?{' '}
-          <Link to="/register" style={{ color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'none' }}>
-            Create one
-          </Link>
+          <Link to="/register" className="auth-link">Create one</Link>
         </p>
       </div>
     </div>

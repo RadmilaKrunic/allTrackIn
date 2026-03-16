@@ -52,12 +52,11 @@ function CategoriesSection() {
   return (
     <div className="card">
       <div className="card-header">
-        <h3 style={{ margin: 0, fontSize: '1rem' }}>🏷️ Categories</h3>
+        <h3 className="modal-title">🏷️ Categories</h3>
         <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}>+ Add</button>
       </div>
       <div className="card-body">
-        {/* Module tabs */}
-        <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <div className="filter-tabs">
           {MODULES.map(mod => (
             <button
               key={mod}
@@ -69,27 +68,19 @@ function CategoriesSection() {
           ))}
         </div>
 
-        {/* Category list */}
         {categories.length === 0 ? (
           <div className="empty-state" style={{ padding: '1.5rem' }}>
             <span style={{ fontSize: '1.75rem' }}>🏷️</span>
-            <p style={{ fontSize: '0.85rem' }}>No categories yet for {activeModule}</p>
+            <p className="text-sm">No categories yet for {activeModule}</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div className="category-list">
             {categories.map((cat: Category) => (
-              <div key={cat._id} style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                padding: '0.375rem 0.75rem',
-                borderRadius: '999px',
-                background: cat.color + '20',
-                border: `1px solid ${cat.color ?? '#ccc'}40`,
-              }}>
+              <div key={cat._id} className="category-badge" style={{ background: cat.color + '20', borderColor: (cat.color ?? '#ccc') + '40' }}>
                 {cat.icon && <span>{cat.icon}</span>}
-                <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--color-text)' }}>{cat.name}</span>
+                <span className="category-badge-name">{cat.name}</span>
                 <button
-                  className="btn btn-icon btn-ghost"
-                  style={{ padding: '0.1rem 0.2rem', fontSize: '0.7rem', color: 'var(--color-text-muted)', width: '18px', height: '18px' }}
+                  className="btn btn-icon btn-ghost category-badge-del"
                   onClick={() => setDeleteTarget(cat)}
                 >
                   ✕
@@ -100,7 +91,6 @@ function CategoriesSection() {
         )}
       </div>
 
-      {/* Add modal */}
       <Modal
         isOpen={showAdd}
         onClose={() => setShowAdd(false)}
@@ -121,10 +111,8 @@ function CategoriesSection() {
         <div className="form-row">
           <div className="form-group">
             <label className="form-label">Color</label>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <input type="color" value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
-                style={{ width: '40px', height: '36px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '2px', cursor: 'pointer' }}
-              />
+            <div className="color-input-row">
+              <input type="color" value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))} className="color-input-swatch" />
               <input className="form-input" value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))} />
             </div>
           </div>
@@ -187,36 +175,27 @@ function QuotesSection() {
   return (
     <div className="card">
       <div className="card-header">
-        <h3 style={{ margin: 0, fontSize: '1rem' }}>✨ Affirmations & Quotes</h3>
+        <h3 className="modal-title">✨ Affirmations & Quotes</h3>
         <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}>+ Add</button>
       </div>
       <div className="card-body">
-        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
-          These quotes appear daily on your dashboard.
-        </p>
+        <p className="section-desc">These quotes appear daily on your dashboard.</p>
 
         {quotes.length === 0 ? (
           <div className="empty-state" style={{ padding: '1.5rem' }}>
             <span style={{ fontSize: '1.75rem' }}>✨</span>
-            <p style={{ fontSize: '0.85rem' }}>Add your first affirmation</p>
+            <p className="text-sm">Add your first affirmation</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className="quote-list">
             {quotes.map((quote: Quote) => (
-              <div key={quote._id} style={{
-                padding: '0.875rem 1rem',
-                borderRadius: 'var(--radius-md)',
-                background: quote.active !== false ? 'var(--color-surface)' : 'var(--color-bg-secondary)',
-                border: '1px solid var(--color-border)',
-                opacity: quote.active !== false ? 1 : 0.5,
-                display: 'flex', gap: '0.75rem', alignItems: 'flex-start',
-              }}>
-                <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>✨</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{ margin: 0, fontSize: '0.875rem', fontStyle: 'italic', lineHeight: 1.5 }}>"{quote.text}"</p>
-                  {quote.author && <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>— {quote.author}</p>}
+              <div key={quote._id} className="quote-item" style={{ background: quote.active !== false ? 'var(--color-surface)' : 'var(--color-bg-secondary)', opacity: quote.active !== false ? 1 : 0.5 }}>
+                <span className="quote-item-icon">✨</span>
+                <div className="quote-item-content">
+                  <p className="quote-text-block">"{quote.text}"</p>
+                  {quote.author && <p className="quote-author-text">— {quote.author}</p>}
                 </div>
-                <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
+                <div className="quote-actions">
                   <button
                     className="btn btn-icon btn-ghost"
                     title={quote.active !== false ? 'Disable' : 'Enable'}
@@ -226,8 +205,7 @@ function QuotesSection() {
                     {quote.active !== false ? '👁' : '🚫'}
                   </button>
                   <button
-                    className="btn btn-icon btn-ghost"
-                    style={{ color: '#DC2626', fontSize: '0.75rem' }}
+                    className="btn btn-icon btn-ghost btn-delete"
                     onClick={() => setDeleteTarget(quote)}
                   >
                     ✕
@@ -285,24 +263,22 @@ function ThemeSection() {
 
   const THEME_PREVIEWS: Record<string, { bg: string; accent: string; emoji: string }> = {
     pastel:  { bg: '#FDF8FC', accent: '#C77DB5', emoji: '🌸' },
-    spring:  { bg: '#FFF9F0', accent: '#E8708A', emoji: '🌺' },
+    spring:  { bg: '#F2FAF5', accent: '#2A8C57', emoji: '🌿' },
     summer:  { bg: '#FFFBF0', accent: '#F0B429', emoji: '☀️' },
     autumn:  { bg: '#FDF6F0', accent: '#C0622A', emoji: '🍂' },
     winter:  { bg: '#F0F4F8', accent: '#3A80B8', emoji: '❄️' },
-    nature:  { bg: '#F5F2EC', accent: '#6B7A50', emoji: '🌿' },
+    nature:  { bg: '#F5F2EC', accent: '#6B7A50', emoji: '🌲' },
     luxury:  { bg: '#0E0A12', accent: '#C8A44A', emoji: '✨' },
   };
 
   return (
     <div className="card">
       <div className="card-header">
-        <h3 style={{ margin: 0, fontSize: '1rem' }}>🎨 Appearance</h3>
+        <h3 className="modal-title">🎨 Appearance</h3>
       </div>
       <div className="card-body">
-        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
-          Choose your style mood:
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem' }}>
+        <p className="section-desc">Choose your style mood:</p>
+        <div className="theme-grid">
           {Object.entries(themes).map(([key, theme]) => {
             const preview = THEME_PREVIEWS[key];
             const isActive = currentTheme === key;
@@ -310,27 +286,19 @@ function ThemeSection() {
               <button
                 key={key}
                 onClick={() => setCurrentTheme(key)}
+                className="theme-btn"
                 style={{
-                  padding: '0.875rem',
-                  borderRadius: 'var(--radius-lg)',
-                  border: `2px solid ${isActive ? preview?.accent ?? 'var(--color-primary)' : 'var(--color-border)'}`,
+                  borderColor: isActive ? (preview?.accent ?? 'var(--color-primary)') : 'var(--color-border)',
                   background: preview?.bg ?? '#fff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  transition: 'all 0.2s',
                   boxShadow: isActive ? `0 0 0 3px ${preview?.accent ?? 'var(--color-primary)'}30` : 'none',
-                  fontFamily: 'inherit',
                 }}
               >
-                <span style={{ fontSize: '1.5rem' }}>{preview?.emoji ?? '🎨'}</span>
-                <div style={{ width: '100%', height: '6px', borderRadius: '3px', background: preview?.accent ?? '#ccc' }} />
-                <span style={{ fontSize: '0.72rem', fontWeight: isActive ? 700 : 400, color: preview?.accent ?? '#333' }}>
+                <span className="theme-emoji">{preview?.emoji ?? '🎨'}</span>
+                <div className="theme-accent-bar" style={{ background: preview?.accent ?? '#ccc' }} />
+                <span className="theme-name" style={{ fontWeight: isActive ? 700 : 400, color: preview?.accent ?? '#333' }}>
                   {theme.name}
                 </span>
-                {isActive && <span style={{ fontSize: '0.65rem', color: preview?.accent ?? '#333', fontWeight: 600 }}>✓ Active</span>}
+                {isActive && <span className="theme-active-badge" style={{ color: preview?.accent ?? '#333' }}>✓ Active</span>}
               </button>
             );
           })}
@@ -373,35 +341,28 @@ function ModuleTogglesSection() {
   return (
     <div className="card">
       <div className="card-header">
-        <h3 style={{ margin: 0, fontSize: '1rem' }}>🔲 Modules</h3>
+        <h3 className="modal-title">🔲 Modules</h3>
       </div>
       <div className="card-body">
-        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+        <p className="section-desc">
           Choose which modules appear in the navigation. Disabled modules are hidden but data is preserved.
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div className="module-list">
           {ALL_MODULES.map(mod => {
             const isOn = enabled.includes(mod);
             const color = MODULE_COLORS[mod]?.primary ?? 'var(--color-primary)';
             return (
-              <div key={mod} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', background: isOn ? MODULE_COLORS[mod]?.soft ?? 'var(--color-surface)' : 'var(--color-bg-secondary)', border: `1px solid ${isOn ? color + '40' : 'var(--color-border)'}`, opacity: isOn ? 1 : 0.6 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '1.25rem' }}>{MODULE_ICONS[mod]}</span>
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem', color: isOn ? color : 'var(--color-text-muted)' }}>{MODULE_LABELS[mod]}</span>
+              <div key={mod} className="module-item" style={{ background: isOn ? MODULE_COLORS[mod]?.soft ?? 'var(--color-surface)' : 'var(--color-bg-secondary)', borderColor: isOn ? color + '40' : 'var(--color-border)', opacity: isOn ? 1 : 0.6 }}>
+                <div className="module-item-label">
+                  <span className="module-item-icon">{MODULE_ICONS[mod]}</span>
+                  <span className="module-item-name" style={{ color: isOn ? color : 'var(--color-text-muted)' }}>{MODULE_LABELS[mod]}</span>
                 </div>
                 <button
                   onClick={() => toggle(mod)}
-                  style={{
-                    width: '44px', height: '24px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-                    background: isOn ? color : 'var(--color-border)',
-                    position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-                  }}
+                  className="toggle-switch"
+                  style={{ background: isOn ? color : 'var(--color-border)' }}
                 >
-                  <span style={{
-                    position: 'absolute', top: '3px', left: isOn ? '23px' : '3px',
-                    width: '18px', height: '18px', borderRadius: '50%', background: 'white',
-                    transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                  }} />
+                  <span className="toggle-knob" style={{ left: isOn ? '23px' : '3px' }} />
                 </button>
               </div>
             );
@@ -431,16 +392,13 @@ function HabitForm({ value, onChange }: { value: HabitFormValue; onChange: (v: H
         </div>
         <div className="form-group">
           <label className="form-label">Color</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.25rem' }}>
+          <div className="habit-color-picker">
             {HABIT_COLORS.map(c => (
               <button
                 key={c}
                 onClick={() => onChange({ ...value, color: c })}
-                style={{
-                  width: '28px', height: '28px', borderRadius: '50%', background: c,
-                  border: value.color === c ? '3px solid var(--color-text)' : '2px solid transparent',
-                  cursor: 'pointer', transition: 'border 0.15s',
-                }}
+                className={`habit-color-btn${value.color === c ? ' selected' : ''}`}
+                style={{ background: c }}
               />
             ))}
           </div>
@@ -496,37 +454,29 @@ function HabitsSection() {
   return (
     <div className="card">
       <div className="card-header">
-        <h3 style={{ margin: 0, fontSize: '1rem' }}>🎯 Habit Tracker</h3>
+        <h3 className="modal-title">🎯 Habit Tracker</h3>
         <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}>+ Add Habit</button>
       </div>
       <div className="card-body">
-        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
-          Define habits to track daily. Each habit shows a streak of consecutive days completed.
-        </p>
+        <p className="section-desc">Define habits to track daily. Each habit shows a streak of consecutive days completed.</p>
 
         {habits.length === 0 ? (
           <div className="empty-state" style={{ padding: '1.5rem' }}>
             <span style={{ fontSize: '1.75rem' }}>🎯</span>
-            <p style={{ fontSize: '0.85rem' }}>No habits defined yet</p>
+            <p className="text-sm">No habits defined yet</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="habits-list">
             {habits.map(habit => {
               const color = habit.color ?? HABIT_COLORS[0];
               const isOn = habit.active !== false;
               return (
-                <div key={habit._id} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.75rem',
-                  padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
-                  background: isOn ? color + '15' : 'var(--color-bg-secondary)',
-                  border: `1px solid ${isOn ? color + '40' : 'var(--color-border)'}`,
-                  opacity: isOn ? 1 : 0.6,
-                }}>
-                  {habit.icon && <span style={{ fontSize: '1.1rem' }}>{habit.icon}</span>}
-                  <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9rem', color: isOn ? color : 'var(--color-text-muted)' }}>
+                <div key={habit._id} className="settings-habit-item" style={{ background: isOn ? color + '15' : 'var(--color-bg-secondary)', borderColor: isOn ? color + '40' : 'var(--color-border)', opacity: isOn ? 1 : 0.6 }}>
+                  {habit.icon && <span className="settings-habit-icon">{habit.icon}</span>}
+                  <span className="settings-habit-name" style={{ color: isOn ? color : 'var(--color-text-muted)' }}>
                     {habit.name}
                   </span>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  <div className="settings-habit-actions">
                     <button
                       className="btn btn-icon btn-ghost"
                       style={{ fontSize: '0.85rem' }}
@@ -546,8 +496,7 @@ function HabitsSection() {
                       {isOn ? '👁' : '🚫'}
                     </button>
                     <button
-                      className="btn btn-icon btn-ghost"
-                      style={{ color: '#DC2626', fontSize: '0.75rem' }}
+                      className="btn btn-icon btn-ghost btn-delete"
                       onClick={() => setDeleteTarget(habit)}
                     >
                       ✕
@@ -560,7 +509,6 @@ function HabitsSection() {
         )}
       </div>
 
-      {/* Add modal */}
       <Modal
         isOpen={showAdd}
         onClose={() => setShowAdd(false)}
@@ -577,7 +525,6 @@ function HabitsSection() {
         <HabitForm value={form} onChange={setForm} />
       </Modal>
 
-      {/* Edit modal */}
       <Modal
         isOpen={!!editTarget}
         onClose={() => setEditTarget(null)}
@@ -612,12 +559,10 @@ function HabitsSection() {
 // ─── Settings Page ────────────────────────────────────────────────────────────
 export default function Settings() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '800px' }}>
+    <div className="settings-page">
       <div>
-        <h2 style={{ margin: 0 }}>⚙️ Settings</h2>
-        <p style={{ color: 'var(--color-text-muted)', marginTop: '0.25rem', fontSize: '0.875rem' }}>
-          Manage categories, themes, and app preferences.
-        </p>
+        <h2 className="settings-title">⚙️ Settings</h2>
+        <p className="settings-desc">Manage categories, themes, and app preferences.</p>
       </div>
       <ThemeSection />
       <ModuleTogglesSection />

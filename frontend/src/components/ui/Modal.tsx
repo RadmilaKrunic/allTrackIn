@@ -29,7 +29,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, size =
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth: MAX_WIDTHS[size] }}>
         <div className="modal-header">
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{title}</h3>
+          <h3 className="modal-title">{title}</h3>
           <button className="btn btn-icon btn-ghost" onClick={onClose} aria-label="Close">
             ✕
           </button>
