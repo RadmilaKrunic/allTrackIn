@@ -12,7 +12,11 @@ namespace AllTrackIn.Api.Services
 
         public LiteDbContext(IOptions<LiteDbSettings> settings)
         {
-            _db = new LiteDatabase(settings.Value.DatabasePath);
+            var connectionString = new ConnectionString(settings.Value.DatabasePath)
+            {
+                Connection = ConnectionType.Shared
+            };
+            _db = new LiteDatabase(connectionString);
             EnsureIndexes();
         }
 
