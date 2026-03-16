@@ -23,7 +23,7 @@ namespace AllTrackIn.Api.Services
             => Collection.FindOne(predicate);
 
         public T FindById(string id)
-            => Collection.FindOne(x => x.Id == id);
+            => Collection.FindById(id);
 
         public T Create(T document)
         {
@@ -42,7 +42,7 @@ namespace AllTrackIn.Api.Services
         }
 
         public bool Delete(string id)
-            => Collection.DeleteMany(x => x.Id == id) > 0;
+            => Collection.Delete(id);
 
         public int Count(Expression<Func<T, bool>> predicate)
             => Collection.Count(predicate);
