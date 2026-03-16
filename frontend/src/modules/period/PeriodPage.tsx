@@ -51,6 +51,7 @@ export default function PeriodPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<PeriodEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PeriodEntry | null>(null);
+  const [statsMonth, setStatsMonth] = useState(new Date());
   const [form, setForm] = useState<EntryForm>({ ...EMPTY_FORM });
 
   const { data: entries = [], isLoading } = useQuery<PeriodEntry[]>({
@@ -169,82 +170,93 @@ export default function PeriodPage() {
         </button>
       </div>
 
-      {/* Phase + Predictions cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.875rem', marginBottom: '1.5rem' }}>
-        {/* Current Phase */}
-        <div className="card" style={{ padding: '1.125rem 1.25rem' }}>
-          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '0.375rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Current Phase</div>
-          {phaseLabel ? (
-            <>
-              <div style={{ fontWeight: 700, fontSize: '1.05rem', color: phaseColor }}>{phaseLabel}</div>
-              {phaseDays !== null && phaseDays >= 0 && (
-                <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                  {phaseLabel.includes('Menstruation') ? `${phaseDays}d remaining` : `${phaseDays}d until next phase`}
+      {/* Stats + Calendar row */}
+      <div className="grid-2" style={{ marginBottom: '1.25rem' }}>
+        {/* Stats card */}
+        <div className="card">
+          <div className="card-header">
+            <h3 style={{ margin: 0, fontSize: '0.95rem' }}>📊 Stats</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setStatsMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>‹</button>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, minWidth: 90, textAlign: 'center' }}>{format(statsMonth, 'MMM yyyy')}</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => setStatsMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>›</button>
+            </div>
+          </div>
+          <div className="card-body">
+            {/* Phase chip */}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.875rem' }}>
+              {phaseLabel ? (
+                <div style={{ padding: '0.35rem 0.65rem', borderRadius: 'var(--radius-sm)', background: phaseColor + '20', border: `1px solid ${phaseColor}40` }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: phaseColor }}>{phaseLabel}</span>
+                  {phaseDays !== null && phaseDays >= 0 && (
+                    <span style={{ fontSize: '0.72rem', color: phaseColor, marginLeft: '0.3rem', opacity: 0.8 }}>
+                      {phaseLabel.includes('Menstruation') ? `${phaseDays}d left` : `${phaseDays}d`}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div style={{ padding: '0.35rem 0.65rem', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                  <span style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>Log a period to see phase</span>
                 </div>
               )}
-            </>
-          ) : (
-            <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Log a period to see phase</div>
-          )}
-        </div>
-
-        {/* Average Cycle */}
-        <div className="card" style={{ padding: '1.125rem 1.25rem' }}>
-          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '0.375rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Avg Cycle</div>
-          <div style={{ fontWeight: 700, fontSize: '1.35rem', color: C.primary }}>{avgCycle}<span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--color-text-muted)' }}> days</span></div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.125rem' }}>{avgBleeding}d bleeding avg</div>
-        </div>
-
-        {/* Next Period */}
-        {nextPrediction && (
-          <div className="card" style={{ padding: '1.125rem 1.25rem', borderColor: C.primary + '40', background: C.soft }}>
-            <div style={{ fontSize: '0.72rem', color: C.text, marginBottom: '0.375rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Next Period</div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: C.primary }}>{formatDate(nextPrediction.startDate)}</div>
-            <div style={{ fontSize: '0.75rem', color: C.text, marginTop: '0.125rem' }}>
-              {daysUntil(nextPrediction.startDate) > 0 ? `In ${daysUntil(nextPrediction.startDate)} days` : daysUntil(nextPrediction.startDate) === 0 ? 'Today!' : 'Overdue'}
+              <div style={{ padding: '0.35rem 0.65rem', borderRadius: 'var(--radius-sm)', background: C.soft, border: `1px solid ${C.primary}30` }}>
+                <span style={{ fontWeight: 700, fontSize: '0.9rem', color: C.primary }}>{entries.length}</span>
+                <span style={{ fontSize: '0.72rem', color: C.text, marginLeft: '0.3rem' }}>cycles</span>
+              </div>
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>ends ~{formatDate(nextPrediction.endDate)}</div>
-          </div>
-        )}
 
-        {/* Cycle count */}
-        <div className="card" style={{ padding: '1.125rem 1.25rem' }}>
-          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '0.375rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Logged Cycles</div>
-          <div style={{ fontWeight: 700, fontSize: '1.35rem', color: C.primary }}>{entries.length}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.125rem' }}>periods tracked</div>
+            {/* Cycle stats bars */}
+            {[
+              { label: 'Avg cycle', value: avgCycle, max: 40, unit: 'd', color: C.primary },
+              { label: 'Avg bleeding', value: avgBleeding, max: 10, unit: 'd', color: '#F472B6' },
+            ].map(({ label, value, max, unit, color }) => (
+              <div key={label} style={{ marginBottom: '0.625rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>{label}</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color }}>{value}{unit}</span>
+                </div>
+                <div style={{ height: '6px', background: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(100, (value / max) * 100)}%`, height: '100%', background: color, borderRadius: '3px', transition: 'width 0.4s' }} />
+                </div>
+              </div>
+            ))}
+
+            {/* Next period */}
+            {nextPrediction && (
+              <div style={{ marginTop: '0.75rem', padding: '0.75rem', borderRadius: 'var(--radius-md)', background: C.soft, border: `1px solid ${C.primary}40` }}>
+                <div style={{ fontSize: '0.72rem', color: C.text, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.25rem' }}>Next Period</div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: C.primary }}>{formatDate(nextPrediction.startDate)}</div>
+                <div style={{ fontSize: '0.75rem', color: C.text, marginTop: '0.1rem' }}>
+                  {daysUntil(nextPrediction.startDate) > 0 ? `In ${daysUntil(nextPrediction.startDate)} days` : daysUntil(nextPrediction.startDate) === 0 ? 'Today!' : 'Overdue'}
+                  {' · '}ends ~{formatDate(nextPrediction.endDate)}
+                </div>
+              </div>
+            )}
+
+            {/* Upcoming predictions list */}
+            {predictions && predictions.predictions.length > 1 && (
+              <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                {predictions.predictions.slice(1, 4).map((p, i) => {
+                  const du = daysUntil(p.startDate);
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                      <span style={{ fontSize: '0.78rem' }}>{formatDate(p.startDate)}</span>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{du < 0 ? 'Past' : `In ${du}d`}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {entries.length === 0 && (
+              <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '0.5rem 0' }}>No cycles logged yet</p>
+            )}
+          </div>
         </div>
+
+        {/* Calendar card */}
+        <PeriodCalendar entries={entries} month={statsMonth} onPrevMonth={() => setStatsMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))} onNextMonth={() => setStatsMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))} onToday={() => setStatsMonth(new Date())} />
       </div>
-
-      {/* Future predictions */}
-      {predictions && predictions.predictions.length > 1 && (
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.95rem', color: C.text }}>🔮 Upcoming Predictions</h3></div>
-          <div className="card-body">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {predictions.predictions.map((p, i) => {
-                const du = daysUntil(p.startDate);
-                return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', background: i === 0 ? C.soft : 'var(--color-surface)', border: `1px solid ${i === 0 ? C.primary + '40' : 'var(--color-border)'}` }}>
-                    <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '0.8rem', flexShrink: 0 }}>
-                      {p.cycleNumber}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{formatDate(p.startDate)} → {formatDate(p.endDate)}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>~{daysBetween(p.startDate, p.endDate) + 1} days</div>
-                    </div>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, padding: '0.2rem 0.6rem', borderRadius: '999px', background: du <= 7 ? C.primary : 'var(--color-border)', color: du <= 7 ? 'white' : 'var(--color-text-muted)' }}>
-                      {du < 0 ? 'Past due' : du === 0 ? 'Today' : `In ${du}d`}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Calendar */}
-      <PeriodCalendar entries={entries} />
 
       {/* History */}
       <div className="card">
@@ -331,11 +343,15 @@ export default function PeriodPage() {
 
 const WEEK_DAYS_SHORT = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-function PeriodCalendar({ entries }: { entries: PeriodEntry[] }) {
-  const [calDate, setCalDate] = useState(new Date());
-
-  const monthStart = startOfMonth(calDate);
-  const monthEnd = endOfMonth(calDate);
+function PeriodCalendar({ entries, month, onPrevMonth, onNextMonth, onToday }: {
+  entries: PeriodEntry[];
+  month: Date;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
+  onToday: () => void;
+}) {
+  const monthStart = startOfMonth(month);
+  const monthEnd = endOfMonth(month);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const padStart = getDay(monthStart);
 
@@ -347,27 +363,15 @@ function PeriodCalendar({ entries }: { entries: PeriodEntry[] }) {
     });
   }
 
-  function isPredictedDay(ds: string, entry: PeriodEntry): boolean {
-    if (!entry.startDate) return false;
-    const bleedDays = entry.bleedingDays ?? (entry.endDate ? daysBetween(entry.startDate, entry.endDate) + 1 : 5);
-    const end = entry.endDate ?? entry.startDate;
-    return ds >= entry.startDate && ds <= end;
-  }
-
   return (
-    <div className="card" style={{ marginBottom: '1.5rem' }}>
+    <div className="card">
       <div className="card-header">
-        <button className="btn btn-ghost btn-sm" onClick={() => setCalDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>‹</button>
-        <h3 style={{ margin: 0, fontSize: '0.95rem', color: C.text }}>🗓 {format(calDate, 'MMMM yyyy')}</h3>
-        <div style={{ display: 'flex', gap: '0.25rem' }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => setCalDate(new Date())}>Today</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => setCalDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>›</button>
-        </div>
+        <h3 style={{ margin: 0, fontSize: '0.95rem' }}>📅 Period Calendar</h3>
       </div>
       <div style={{ padding: '0.75rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '4px' }}>
           {WEEK_DAYS_SHORT.map(d => (
-            <div key={d} style={{ textAlign: 'center', fontSize: '0.7rem', fontWeight: 600, color: 'var(--color-text-muted)', padding: '4px 0' }}>{d}</div>
+            <div key={d} style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--color-text-muted)', padding: '2px 0' }}>{d}</div>
           ))}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
@@ -377,37 +381,25 @@ function PeriodCalendar({ entries }: { entries: PeriodEntry[] }) {
             const isPeriod = isPeriodDay(ds);
             const isCurrentDay = fnsIsToday(day);
             return (
-              <div
+              <button
                 key={ds}
                 style={{
-                  aspectRatio: '1', position: 'relative', display: 'flex',
-                  flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  borderRadius: 'var(--radius-sm)', minHeight: '36px',
-                  border: isCurrentDay ? `2px solid ${C.primary}` : '1px solid transparent',
-                  background: isPeriod ? C.soft : isCurrentDay ? 'var(--color-primary-light)' : 'transparent',
+                  aspectRatio: '1', display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                  borderRadius: '4px',
+                  border: isCurrentDay ? `2px solid ${C.primary}` : 'none',
+                  background: isPeriod ? C.soft : 'var(--color-surface)',
+                  cursor: 'default', fontFamily: 'inherit',
+                  fontSize: '0.65rem',
+                  color: isCurrentDay ? C.primary : 'var(--color-text)',
+                  fontWeight: isCurrentDay ? 700 : 400,
                 }}
               >
-                <span style={{
-                  position: 'absolute', top: '2px', left: '4px',
-                  fontSize: '0.72rem', fontWeight: isCurrentDay ? 700 : 400,
-                  color: isCurrentDay ? C.primary : 'var(--color-text)', lineHeight: 1,
-                }}>
-                  {format(day, 'd')}
-                </span>
-                {isPeriod && (
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '6px' }}>
-                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: C.primary, display: 'inline-block' }} />
-                  </div>
-                )}
-              </div>
+                {format(day, 'd')}
+                {isPeriod && <span style={{ fontSize: '0.6rem' }}>🌸</span>}
+              </button>
             );
           })}
-        </div>
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
-            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: C.primary, display: 'inline-block' }} />
-            Period day
-          </span>
         </div>
       </div>
     </div>

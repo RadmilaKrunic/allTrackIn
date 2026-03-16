@@ -396,8 +396,8 @@ export default function EatingPage() {
             </div>
           )}
 
-          {/* Stats + Mini Calendar row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          {/* Stats + Calendar row */}
+          <div className="grid-2">
             {/* Stats card */}
             <div className="card">
               <div className="card-body" style={{ padding: '1rem' }}>
@@ -438,16 +438,16 @@ export default function EatingPage() {
               </div>
             </div>
 
-            {/* Mini calendar card */}
+            {/* Calendar card — Training style */}
             <div className="card">
-              <div className="card-body" style={{ padding: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>📅 {format(statsMonth, 'MMMM yyyy')}</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.125rem', textAlign: 'center' }}>
-                  {WEEK_DAYS.map(d => (
-                    <div key={d} style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--color-text-muted)', padding: '0.2rem 0' }}>{d[0]}</div>
+              <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.95rem' }}>📅 Diet Calendar</h3></div>
+              <div style={{ padding: '0.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '4px' }}>
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                    <div key={i} style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--color-text-muted)', padding: '2px 0' }}>{d}</div>
                   ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
                   {Array.from({ length: firstDow }, (_, i) => <div key={`e${i}`} />)}
                   {calDays.map(day => {
                     const dateStr = format(day, 'yyyy-MM-dd');
@@ -456,27 +456,31 @@ export default function EatingPage() {
                     const hasDiet = dayDietEntries.length > 0;
                     const dots = dayDietEntries.flatMap(e => e.categories ?? []).slice(0, 3);
                     return (
-                      <div
+                      <button
                         key={dateStr}
-                        onClick={() => openAddDiet(dateStr)}
+                        onClick={() => dayDietEntries.length > 0 ? openEditDiet(dayDietEntries[0]) : openAddDiet(dateStr)}
+                        title={hasDiet ? dayDietEntries.flatMap(e => e.categories ?? []).join(', ') : 'Click to log'}
                         style={{
-                          padding: '0.15rem', borderRadius: 'var(--radius-sm)',
-                          background: isToday ? COLOR.soft : hasDiet ? `${COLOR.primary}12` : 'transparent',
-                          border: isToday ? `1.5px solid ${COLOR.primary}` : '1.5px solid transparent',
-                          cursor: 'pointer', minHeight: '1.8rem',
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.1rem',
+                          aspectRatio: '1', display: 'flex', flexDirection: 'column',
+                          alignItems: 'center', justifyContent: 'center', gap: '1px',
+                          borderRadius: '4px',
+                          border: isToday ? `2px solid ${COLOR.primary}` : 'none',
+                          background: hasDiet ? COLOR.soft : 'var(--color-surface)',
+                          cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.65rem',
+                          color: isToday ? COLOR.primary : 'var(--color-text)',
+                          fontWeight: isToday ? 700 : 400,
                         }}
                       >
-                        <span style={{ fontSize: '0.65rem', fontWeight: isToday ? 700 : 400, color: isToday ? COLOR.primary : 'var(--color-text)' }}>
-                          {format(day, 'd')}
-                        </span>
-                        <div style={{ display: 'flex', gap: '0.1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                          {dots.map((cat, i) => {
-                            const cfg = dietCats.find(c => c.key === cat);
-                            return <span key={i} style={{ width: '0.35rem', height: '0.35rem', borderRadius: '50%', background: cfg?.color ?? '#999' }} />;
-                          })}
-                        </div>
-                      </div>
+                        {format(day, 'd')}
+                        {hasDiet && (
+                          <div style={{ display: 'flex', gap: '1px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            {dots.map((cat, i) => {
+                              const cfg = dietCats.find(c => c.key === cat);
+                              return <span key={i} style={{ width: '0.55rem', height: '0.55rem', borderRadius: '50%', background: cfg?.color ?? COLOR.primary, display: 'inline-block' }} />;
+                            })}
+                          </div>
+                        )}
+                      </button>
                     );
                   })}
                 </div>
