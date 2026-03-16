@@ -26,8 +26,9 @@ namespace AllTrackIn.Api.Controllers
             var uid = User.GetUserId();
             var result = _service.FindAll(e => e.UserId == uid
                 && (entryType == null || e.EntryType == entryType)
-                && (date == null || e.Date == date)
-                && (startDate == null || endDate == null || (e.Date != null && string.Compare(e.Date, startDate) >= 0 && string.Compare(e.Date, endDate) <= 0)));
+                && (date == null || e.Date == date))
+                .Where(e => startDate == null || endDate == null || (e.Date != null && string.Compare(e.Date, startDate) >= 0 && string.Compare(e.Date, endDate) <= 0))
+                .ToList();
             return Ok(result.OrderByDescending(e => e.CreatedAt).ToList());
         }
 

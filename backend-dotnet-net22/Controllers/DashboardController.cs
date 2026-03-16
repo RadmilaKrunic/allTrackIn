@@ -28,10 +28,8 @@ namespace AllTrackIn.Api.Controllers
             var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
             var twoWeeksAhead = DateTime.UtcNow.AddDays(14).ToString("yyyy-MM-dd");
 
-            var upcomingEvents = _db.Events.Find(e => e.UserId == uid
-                && e.Date != null
-                && string.Compare(e.Date, today) >= 0
-                && string.Compare(e.Date, twoWeeksAhead) <= 0)
+            var upcomingEvents = _db.Events.Find(e => e.UserId == uid && e.Date != null).ToList()
+                .Where(e => string.Compare(e.Date, today) >= 0 && string.Compare(e.Date, twoWeeksAhead) <= 0)
                 .OrderBy(e => e.Date)
                 .Take(10)
                 .ToList();

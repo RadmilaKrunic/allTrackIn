@@ -25,8 +25,9 @@ namespace AllTrackIn.Api.Controllers
         public IActionResult GetAll([FromQuery] string startDate, [FromQuery] string endDate)
         {
             var uid = User.GetUserId();
-            var result = _periodService.FindAll(e => e.UserId == uid
-                && (startDate == null || endDate == null || (e.StartDate != null && string.Compare(e.StartDate, startDate) >= 0 && string.Compare(e.StartDate, endDate) <= 0)));
+            var result = _periodService.FindAll(e => e.UserId == uid)
+                .Where(e => startDate == null || endDate == null || (e.StartDate != null && string.Compare(e.StartDate, startDate) >= 0 && string.Compare(e.StartDate, endDate) <= 0))
+                .ToList();
             return Ok(result.OrderByDescending(e => e.StartDate).ToList());
         }
 

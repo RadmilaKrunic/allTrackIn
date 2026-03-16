@@ -27,40 +27,26 @@ namespace AllTrackIn.Api.Controllers
             var start = new DateTime(year, month, 1).ToString("yyyy-MM-dd");
             var end = new DateTime(year, month, DateTime.DaysInMonth(year, month)).ToString("yyyy-MM-dd");
 
-            var spending = _db.Spending.Find(e => e.UserId == uid
-                && e.Date != null
-                && string.Compare(e.Date, start) >= 0
-                && string.Compare(e.Date, end) <= 0).ToList();
+            var spending = _db.Spending.Find(e => e.UserId == uid && e.Date != null).ToList()
+                .Where(e => string.Compare(e.Date, start) >= 0 && string.Compare(e.Date, end) <= 0).ToList();
 
-            var training = _db.Training.Find(e => e.UserId == uid
-                && e.Date != null
-                && string.Compare(e.Date, start) >= 0
-                && string.Compare(e.Date, end) <= 0).ToList();
+            var training = _db.Training.Find(e => e.UserId == uid && e.Date != null).ToList()
+                .Where(e => string.Compare(e.Date, start) >= 0 && string.Compare(e.Date, end) <= 0).ToList();
 
-            var events = _db.Events.Find(e => e.UserId == uid
-                && e.Date != null
-                && string.Compare(e.Date, start) >= 0
-                && string.Compare(e.Date, end) <= 0).ToList();
+            var events = _db.Events.Find(e => e.UserId == uid && e.Date != null).ToList()
+                .Where(e => string.Compare(e.Date, start) >= 0 && string.Compare(e.Date, end) <= 0).ToList();
 
-            var work = _db.Work.Find(e => e.UserId == uid
-                && e.Date != null
-                && string.Compare(e.Date, start) >= 0
-                && string.Compare(e.Date, end) <= 0).ToList();
+            var work = _db.Work.Find(e => e.UserId == uid && e.Date != null).ToList()
+                .Where(e => string.Compare(e.Date, start) >= 0 && string.Compare(e.Date, end) <= 0).ToList();
 
-            var eating = _db.Eating.Find(e => e.UserId == uid
-                && e.Date != null
-                && string.Compare(e.Date, start) >= 0
-                && string.Compare(e.Date, end) <= 0).ToList();
+            var eating = _db.Eating.Find(e => e.UserId == uid && e.Date != null).ToList()
+                .Where(e => string.Compare(e.Date, start) >= 0 && string.Compare(e.Date, end) <= 0).ToList();
 
-            var notes = _db.Notes.Find(e => e.UserId == uid
-                && e.Date != null
-                && string.Compare(e.Date, start) >= 0
-                && string.Compare(e.Date, end) <= 0).ToList();
+            var notes = _db.Notes.Find(e => e.UserId == uid && e.Date != null).ToList()
+                .Where(e => string.Compare(e.Date, start) >= 0 && string.Compare(e.Date, end) <= 0).ToList();
 
-            var period = _db.Period.Find(e => e.UserId == uid
-                && e.StartDate != null
-                && string.Compare(e.StartDate, start) >= 0
-                && string.Compare(e.StartDate, end) <= 0).ToList();
+            var period = _db.Period.Find(e => e.UserId == uid && e.StartDate != null).ToList()
+                .Where(e => string.Compare(e.StartDate, start) >= 0 && string.Compare(e.StartDate, end) <= 0).ToList();
 
             return Ok(new
             {
