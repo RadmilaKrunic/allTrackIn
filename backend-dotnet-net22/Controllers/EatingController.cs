@@ -19,6 +19,8 @@ namespace AllTrackIn.Api.Controllers
             _service = new BaseService<EatingEntry>(db.Eating);
         }
 
+        // ── Generic (filterable) ──────────────────────────────────────────────
+
         [HttpGet]
         public IActionResult GetAll([FromQuery] string entryType, [FromQuery] string date,
             [FromQuery] string startDate, [FromQuery] string endDate)
@@ -80,6 +82,16 @@ namespace AllTrackIn.Api.Controllers
             if (existing == null || existing.UserId != uid) return NotFound();
             _service.Delete(id);
             return NoContent();
+        }
+
+        // ── Recipes ───────────────────────────────────────────────────────────
+
+        [HttpGet("recipes")]
+        public IActionResult GetRecipes()
+        {
+            var uid = User.GetUserId();
+            var result = _service.FindAll(e => e.UserId == uid && e.EntryType == "recipe");
+            return Ok(result.OrderByDescending(e => e.CreatedAt).ToList());
         }
     }
 }
